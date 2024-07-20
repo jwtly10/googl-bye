@@ -5,10 +5,10 @@ import (
 	"log"
 
 	"github.com/google/go-github/v39/github"
-	"github.com/jwtly10/googlbye/internal/common"
-	"github.com/jwtly10/googlbye/internal/models"
-	"github.com/jwtly10/googlbye/internal/repository"
-	"github.com/jwtly10/googlbye/internal/search"
+	"github.com/jwtly10/googl-bye/internal/common"
+	"github.com/jwtly10/googl-bye/internal/models"
+	"github.com/jwtly10/googl-bye/internal/repository"
+	"github.com/jwtly10/googl-bye/internal/search"
 	"go.uber.org/zap/zapcore"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v39/github"
-	"github.com/jwtly10/googlbye/internal/common"
-	"github.com/jwtly10/googlbye/internal/models"
+	"github.com/jwtly10/googl-bye/internal/common"
+	"github.com/jwtly10/googl-bye/internal/models"
 )
 
 type GithubClientI interface {

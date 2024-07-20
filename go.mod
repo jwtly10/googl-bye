@@ -1,4 +1,4 @@
-module github.com/jwtly10/googlbye
+module github.com/jwtly10/googl-bye
 
 go 1.22.3
 

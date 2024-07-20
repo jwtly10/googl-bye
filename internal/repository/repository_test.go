@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jwtly10/googlbye/internal/models"
-	"github.com/jwtly10/googlbye/internal/repository"
-	"github.com/jwtly10/googlbye/internal/test"
+	"github.com/jwtly10/googl-bye/internal/models"
+	"github.com/jwtly10/googl-bye/internal/repository"
+	"github.com/jwtly10/googl-bye/internal/test"
 )
 
 var (

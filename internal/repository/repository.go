@@ -7,7 +7,7 @@ import (
 	"net"
 	"reflect"
 
-	"github.com/jwtly10/googlbye/internal/models"
+	"github.com/jwtly10/googl-bye/internal/models"
 )
 
 type RepoRepository interface {
