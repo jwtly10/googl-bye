@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-github/v39/github"
 	"github.com/jwtly10/googlbye/internal/common"
 	"github.com/jwtly10/googlbye/internal/mock"
+	"github.com/jwtly10/googlbye/internal/models"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
 )
@@ -43,7 +44,8 @@ func TestFindRepositories(t *testing.T) {
 	}
 
 	// Call FindRepositories
-	repos, err := gs.FindRepositories(context.Background(), "test query", nil)
+	query := &models.SearchParams{}
+	repos, err := gs.FindRepositories(context.Background(), query)
 
 	// Assert no error
 	assert.NoError(t, err)
