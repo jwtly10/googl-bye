@@ -29,7 +29,7 @@ func NewGithubSearch(config *common.Config, log common.Logger) *GithubSearch {
 	}
 }
 
-func (ghs *GithubSearch) FindRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]models.RepoModel, error) {
+func (ghs *GithubSearch) FindRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]models.RepositoryModel, error) {
 	ghRepos, err := ghs.client.SearchRepositories(ctx, query, opts)
 	if err != nil {
 		ghs.log.Errorf("Error searching repositories: %v", err)
@@ -38,12 +38,12 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, query string, opt
 
 	ghs.log.Debugf("Repos from API: %v", ghRepos)
 
-	var repos []models.RepoModel
+	var repos []models.RepositoryModel
 	for _, repo := range ghRepos {
 		repoName := getStringOrEmpty(repo.Name)
 
 		ghs.log.Debugf("Trying to parse: %v", repo)
-		parsedRepo := models.RepoModel{
+		parsedRepo := models.RepositoryModel{
 			Name:     repoName,
 			Author:   getOwnerName(repo.Owner),
 			GhUrl:    fmt.Sprintf("https://github.com/%s/%s", *repo.Owner.Login, repoName),
