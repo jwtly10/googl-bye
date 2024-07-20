@@ -6,30 +6,33 @@ import (
 
 	"github.com/google/go-github/v39/github"
 	"github.com/jwtly10/googlbye/internal/common"
+	"github.com/jwtly10/googlbye/internal/models"
 	"github.com/jwtly10/googlbye/internal/search"
 	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-
 	config, err := common.LoadConfig()
 	if err != nil {
 		log.Fatal("Failed to load config")
 	}
 
-	useJsonLogger := false // TODO make configurable based on env
+	useJsonLogger := false
 	logger := common.NewLogger(useJsonLogger, zapcore.DebugLevel)
 
-	ghSearch := search.NewGithubSearch(config, logger)
-
-	searchQuery := "language:go stars:>1000"
-	opts := &github.SearchOptions{
-		Sort:  "stars",
-		Order: "desc",
-		ListOptions: github.ListOptions{
-			PerPage: 5,
+	searchParams := &models.SearchParams{
+		Query: "language:go stars:>1000",
+		Opts: &github.SearchOptions{
+			Sort:  "stars",
+			Order: "desc",
+			ListOptions: github.ListOptions{
+				PerPage: 5,
+			},
 		},
+		Page: 2,
 	}
 
-	ghSearch.FindRepositories(context.Background(), searchQuery, opts)
+	search := search.NewRepoSearch(searchParams, config, logger)
+
+	search.StartSearch(context.Background())
 }

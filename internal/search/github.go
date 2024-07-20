@@ -29,8 +29,9 @@ func NewGithubSearch(config *common.Config, log common.Logger) *GithubSearch {
 	}
 }
 
-func (ghs *GithubSearch) FindRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]models.RepositoryModel, error) {
-	ghRepos, err := ghs.client.SearchRepositories(ctx, query, opts)
+// TODO implement pagination, and keep track of the last page we were on for a given search
+func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.SearchParams) ([]models.RepositoryModel, error) {
+	ghRepos, err := ghs.client.SearchRepositories(ctx, params.Query, params.Opts)
 	if err != nil {
 		ghs.log.Errorf("Error searching repositories: %v", err)
 		return nil, nil
