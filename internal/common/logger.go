@@ -13,6 +13,7 @@ type Logger interface {
 	Info(msg string, args ...interface{})
 	Infof(format string, args ...interface{})
 	Warn(msg string, args ...interface{})
+	Warnf(msg string, args ...interface{})
 	Error(msg string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Fatal(msg string, args ...interface{})
@@ -68,6 +69,11 @@ func (l *CustomLogger) Infof(format string, args ...interface{}) {
 // Warn logs a warning message
 func (l *CustomLogger) Warn(msg string, args ...interface{}) {
 	l.slogger.Warnw(msg, args...)
+}
+
+// Warnf logs an error message with formatting.
+func (l *CustomLogger) Warnf(format string, args ...interface{}) {
+	l.slogger.Warnf(format, args...)
 }
 
 // Error logs an error message

@@ -68,6 +68,7 @@ func TestFindRepositories(t *testing.T) {
 	defer container.Terminate(context.Background())
 
 	searchRepo := repository.NewSearchParamRepository(db)
+	repoRepo := repository.NewRepoRepository(db)
 
 	// Create a GithubSearch instance with the mock client
 	cache := make(map[string]bool)
@@ -77,6 +78,7 @@ func TestFindRepositories(t *testing.T) {
 		log:        common.NewLogger(false, zapcore.DebugLevel),
 		repoCache:  &cache,
 		searchRepo: searchRepo,
+		repoRepo:   repoRepo,
 	}
 
 	// Call FindRepositories
@@ -162,6 +164,7 @@ func TestFindRepositoriesCacheHit(t *testing.T) {
 	defer container.Terminate(context.Background())
 
 	searchRepo := repository.NewSearchParamRepository(db)
+	repoRepo := repository.NewRepoRepository(db)
 
 	// Create a GithubSearch instance with the mock client
 	cache := make(map[string]bool)
@@ -173,6 +176,7 @@ func TestFindRepositoriesCacheHit(t *testing.T) {
 		log:        common.NewLogger(false, zapcore.DebugLevel),
 		repoCache:  &cache,
 		searchRepo: searchRepo,
+		repoRepo:   repoRepo,
 	}
 
 	// Call FindRepositories

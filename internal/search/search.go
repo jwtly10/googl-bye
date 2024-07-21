@@ -18,7 +18,7 @@ type RepoSearch struct {
 }
 
 func NewRepoSearch(params *models.SearchParamsModel, config *common.Config, log common.Logger, repoRepo repository.RepoRepository, cache *map[string]bool, searchRepo repository.SearchParamRepository) *RepoSearch {
-	gh := NewGithubSearch(config, log, cache, searchRepo)
+	gh := NewGithubSearch(config, log, cache, searchRepo, repoRepo)
 	return &RepoSearch{
 		params:   params,
 		gh:       gh,
@@ -36,12 +36,8 @@ func (rs *RepoSearch) StartSearch(ctx context.Context) {
 	}
 
 	for _, repo := range repos {
-		err := rs.repoRepo.CreateRepo(&repo)
-		if err != nil {
-			rs.log.Errorf("Error creating repo in db: %v", err)
-		}
-
-		// Update the cache
+		// Update the cache once we are done saving data to db
+		// Theres only one instance of the search logic running, so we dont need to update cache on the fly
 		(*rs.cache)[fmt.Sprintf("%s/%s", repo.Author, repo.Name)] = true
 		rs.log.Infof("[%s] Repo saved to DB", fmt.Sprintf("%s/%s", repo.Author, repo.Name))
 	}

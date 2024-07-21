@@ -16,9 +16,10 @@ type GithubSearch struct {
 	log        common.Logger
 	repoCache  *map[string]bool
 	searchRepo repository.SearchParamRepository
+	repoRepo   repository.RepoRepository
 }
 
-func NewGithubSearch(config *common.Config, log common.Logger, repoCache *map[string]bool, searchRepo repository.SearchParamRepository) *GithubSearch {
+func NewGithubSearch(config *common.Config, log common.Logger, repoCache *map[string]bool, searchRepo repository.SearchParamRepository, repoRepo repository.RepoRepository) *GithubSearch {
 	ghClient := common.NewGitHubClient(config.GHToken)
 
 	return &GithubSearch{
@@ -27,6 +28,7 @@ func NewGithubSearch(config *common.Config, log common.Logger, repoCache *map[st
 		log:        log,
 		repoCache:  repoCache,
 		searchRepo: searchRepo,
+		repoRepo:   repoRepo,
 	}
 }
 
@@ -42,6 +44,9 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.Se
 	ghs.log.Infof("Current core rate limits: %d/%d - Resets: %v", res.Core.Remaining, res.Core.Limit, res.Core.Reset)
 
 	var allRepos []models.RepositoryModel
+	var batchedInsert []models.RepositoryModel
+	repoCount := 0
+
 	var cacheHits int
 	currentPage := params.StartPage
 	endPage := params.StartPage + params.PagesToProcess
@@ -60,6 +65,7 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.Se
 
 		for _, repo := range ghRepos {
 			repoName := getStringOrEmpty(repo.Name)
+			repoCount++
 
 			// check the cache
 			if (*ghs.repoCache)[fmt.Sprintf("%s/%s", *repo.Owner.Login, repoName)] {
@@ -77,7 +83,22 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.Se
 				CloneUrl: fmt.Sprintf("https://github.com/%s/%s.git", *repo.Owner.Login, repoName),
 				ApiUrl:   getStringOrEmpty(repo.URL),
 			}
+
+			// Batch insert repos to keep the parser job busy
 			allRepos = append(allRepos, parsedRepo)
+			batchedInsert = append(batchedInsert, parsedRepo)
+			if len(batchedInsert) > 29 {
+				ghs.log.Infof("Batch saving '%d' repos to DB", len(batchedInsert))
+				ghs.saveBatchedRepos(batchedInsert)
+				batchedInsert = batchedInsert[:0]
+			}
+		}
+
+		// If there are any repos left... lets save them
+		if len(batchedInsert) > 0 {
+			ghs.log.Infof("Batch saving '%d' repos to DB", len(batchedInsert))
+			ghs.saveBatchedRepos(batchedInsert)
+			batchedInsert = batchedInsert[:0]
 		}
 
 		// Update the search params with the current page
@@ -94,11 +115,18 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.Se
 		currentPage = resp.NextPage
 	}
 
-	ghs.log.Infof("Found %d repos to save (%d cache hits)", len(allRepos), cacheHits)
-	for _, r := range allRepos {
-		ghs.log.Debugf("%v", r)
-	}
+	ghs.log.Infof("Found %d repos to save (%d cache hits)", repoCount, cacheHits)
 	return allRepos, nil
+}
+
+func (ghs *GithubSearch) saveBatchedRepos(batch []models.RepositoryModel) {
+	for _, repo := range batch {
+		err := ghs.repoRepo.CreateRepo(&repo)
+		if err != nil {
+			ghs.log.Errorf("[%s] Error saving repo: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
+		}
+	}
+
 }
 
 func (ghs *GithubSearch) saveSearchParams(params *models.SearchParamsModel) error {

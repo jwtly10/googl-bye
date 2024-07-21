@@ -92,6 +92,7 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 		scanner := bufio.NewScanner(file)
 		lineNumber := 0
 
+		errorsInFile := 0
 		for scanner.Scan() {
 			lineNumber++
 			line := scanner.Text()
@@ -116,7 +117,14 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 		}
 
 		if err := scanner.Err(); err != nil {
-			return err
+			// We can just log the error on a line and continue to the next line, but only if there less than 3 errors in a row
+			relPath, _ := filepath.Rel(dest, path)
+			p.log.Warnf("Error scanning line %d in file %v: %v. Continuing.", lineNumber, relPath, err)
+			errorsInFile++
+			if errorsInFile > 3 {
+				errorsInFile = 0
+				return err
+			}
 		}
 
 		return nil
