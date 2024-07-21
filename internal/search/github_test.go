@@ -34,6 +34,9 @@ func TestFindRepositories(t *testing.T) {
 				},
 			}, nil
 		},
+		MockCheckRateLimit: func(ctx context.Context) (*github.RateLimits, error) {
+			return &github.RateLimits{}, nil
+		},
 	}
 
 	// Create a GithubSearch instance with the mock client
@@ -91,6 +94,9 @@ func TestFindRepositoriesCacheHit(t *testing.T) {
 					URL: github.String("https://api.github.com/repos/owner2/repo2"),
 				},
 			}, nil
+		},
+		MockCheckRateLimit: func(ctx context.Context) (*github.RateLimits, error) {
+			return &github.RateLimits{}, nil
 		},
 	}
 

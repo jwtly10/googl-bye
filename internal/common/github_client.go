@@ -9,6 +9,7 @@ import (
 
 type GithubClientI interface {
 	SearchRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, error)
+	CheckRateLimit(ctx context.Context) (*github.RateLimits, error)
 }
 
 type GitHubClient struct {
@@ -32,4 +33,13 @@ func (gc *GitHubClient) SearchRepositories(ctx context.Context, query string, op
 	}
 
 	return result.Repositories, nil
+}
+
+func (gc *GitHubClient) CheckRateLimit(ctx context.Context) (*github.RateLimits, error) {
+	result, _, err := gc.client.RateLimits(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error checking rate limit: %v", err)
+	}
+
+	return result, nil
 }

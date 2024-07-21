@@ -29,10 +29,21 @@ func NewGithubSearch(config *common.Config, log common.Logger, repoCache *map[st
 
 // TODO implement pagination, and keep track of the last page we were on for a given search
 func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.SearchParams) ([]models.RepositoryModel, error) {
+
+	// Log rate limit before continuing
+	res, err := ghs.client.CheckRateLimit(ctx)
+	if err != nil {
+		ghs.log.Errorf("Error checking rate limit: %v", err)
+		return nil, err
+	}
+
+	ghs.log.Infof("Current search rate limits: %d/%d - Resets: %v", res.Search.Remaining, res.Search.Limit, res.Search.Reset)
+	ghs.log.Infof("Current core rate limits: %d/%d - Resets: %v", res.Core.Remaining, res.Core.Limit, res.Core.Reset)
+
 	ghRepos, err := ghs.client.SearchRepositories(ctx, params.Query, params.Opts)
 	if err != nil {
 		ghs.log.Errorf("Error searching repositories: %v", err)
-		return nil, nil
+		return nil, err
 	}
 
 	ghs.log.Debugf("Repos from API: %v", ghRepos)
