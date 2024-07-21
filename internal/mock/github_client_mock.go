@@ -6,11 +6,11 @@ import (
 )
 
 type MockGithubClient struct {
-	MockSearchRepositories func(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, error)
+	MockSearchRepositories func(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error)
 	MockCheckRateLimit     func(ctx context.Context) (*github.RateLimits, error)
 }
 
-func (m *MockGithubClient) SearchRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, error) {
+func (m *MockGithubClient) SearchRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error) {
 	return m.MockSearchRepositories(ctx, query, opts)
 }
 

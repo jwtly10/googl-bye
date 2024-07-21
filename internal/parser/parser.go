@@ -38,7 +38,7 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 		p.log.Errorf("Error getting pending repos: %v", err)
 	}
 
-	p.log.Infof("Found '%v' repos in state pending", len(reposToParse))
+	p.log.Infof("Found '%v' repos in state PENDING", len(reposToParse))
 
 	// Parse the repos
 	var lastRepo models.RepositoryModel

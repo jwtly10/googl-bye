@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v39/github"
 	"github.com/jwtly10/googl-bye/internal/common"
@@ -15,27 +16,44 @@ import (
 func TestFindRepositories(t *testing.T) {
 	// Create a mock client
 	mockClient := &mock.MockGithubClient{
-		MockSearchRepositories: func(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, error) {
+		MockSearchRepositories: func(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error) {
 			return []*github.Repository{
-				{
-					Name: github.String("repo1"),
-					Owner: &github.User{
-						Login: github.String("owner1"),
+					{
+						Name: github.String("repo1"),
+						Owner: &github.User{
+							Login: github.String("owner1"),
+						},
+						URL: github.String("https://api.github.com/repos/owner1/repo1"),
 					},
-					URL: github.String("https://api.github.com/repos/owner1/repo1"),
-				},
-				{
-					Name: github.String("repo2"),
-					Owner: &github.User{
-						Name:  github.String("Owner Two"),
-						Login: github.String("owner2"),
+					{
+						Name: github.String("repo2"),
+						Owner: &github.User{
+							Name:  github.String("Owner Two"),
+							Login: github.String("owner2"),
+						},
+						URL: github.String("https://api.github.com/repos/owner2/repo2"),
 					},
-					URL: github.String("https://api.github.com/repos/owner2/repo2"),
 				},
-			}, nil
+				&github.Response{NextPage: 0},
+				nil
 		},
 		MockCheckRateLimit: func(ctx context.Context) (*github.RateLimits, error) {
-			return &github.RateLimits{}, nil
+			return &github.RateLimits{
+				Core: &github.Rate{
+					Limit:     10,
+					Remaining: 10,
+					Reset: github.Timestamp{
+						Time: time.Now(),
+					},
+				},
+				Search: &github.Rate{
+					Limit:     10,
+					Remaining: 10,
+					Reset: github.Timestamp{
+						Time: time.Now(),
+					},
+				},
+			}, nil
 		},
 	}
 
@@ -49,7 +67,11 @@ func TestFindRepositories(t *testing.T) {
 	}
 
 	// Call FindRepositories
-	query := &models.SearchParams{}
+	query := &models.SearchParamsModel{
+		StartPage:      0,
+		CurrentPage:    0,
+		PagesToProcess: 1,
+	}
 	repos, err := gs.FindRepositories(context.Background(), query)
 
 	// Assert no error
@@ -76,27 +98,44 @@ func TestFindRepositories(t *testing.T) {
 func TestFindRepositoriesCacheHit(t *testing.T) {
 	// Create a mock client
 	mockClient := &mock.MockGithubClient{
-		MockSearchRepositories: func(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, error) {
+		MockSearchRepositories: func(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error) {
 			return []*github.Repository{
-				{
-					Name: github.String("repo1"),
-					Owner: &github.User{
-						Login: github.String("owner1"),
+					{
+						Name: github.String("repo1"),
+						Owner: &github.User{
+							Login: github.String("owner1"),
+						},
+						URL: github.String("https://api.github.com/repos/owner1/repo1"),
 					},
-					URL: github.String("https://api.github.com/repos/owner1/repo1"),
-				},
-				{
-					Name: github.String("repo2"),
-					Owner: &github.User{
-						Name:  github.String("Owner Two"),
-						Login: github.String("owner2"),
+					{
+						Name: github.String("repo2"),
+						Owner: &github.User{
+							Name:  github.String("Owner Two"),
+							Login: github.String("owner2"),
+						},
+						URL: github.String("https://api.github.com/repos/owner2/repo2"),
 					},
-					URL: github.String("https://api.github.com/repos/owner2/repo2"),
 				},
-			}, nil
+				&github.Response{NextPage: 0},
+				nil
 		},
 		MockCheckRateLimit: func(ctx context.Context) (*github.RateLimits, error) {
-			return &github.RateLimits{}, nil
+			return &github.RateLimits{
+				Core: &github.Rate{
+					Limit:     10,
+					Remaining: 10,
+					Reset: github.Timestamp{
+						Time: time.Now(),
+					},
+				},
+				Search: &github.Rate{
+					Limit:     10,
+					Remaining: 10,
+					Reset: github.Timestamp{
+						Time: time.Now(),
+					},
+				},
+			}, nil
 		},
 	}
 
@@ -112,7 +151,21 @@ func TestFindRepositoriesCacheHit(t *testing.T) {
 	}
 
 	// Call FindRepositories
-	query := &models.SearchParams{}
+	query := &models.SearchParamsModel{
+		Query: "stars:>10000",
+		Opts: github.SearchOptions{
+			Sort:  "stars",
+			Order: "desc",
+			ListOptions: github.ListOptions{
+				PerPage: 2,
+				Page:    0,
+			},
+		},
+		PagesToProcess: 1,
+		CurrentPage:    1,
+		StartPage:      1,
+	}
+
 	repos, err := gs.FindRepositories(context.Background(), query)
 
 	// Assert no error

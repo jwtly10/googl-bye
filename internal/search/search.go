@@ -10,25 +10,26 @@ import (
 )
 
 type RepoSearch struct {
-	params   *models.SearchParams
+	params   *models.SearchParamsModel
 	log      common.Logger
-	repoRepo repository.RepoRepository
 	gh       *GithubSearch
 	cache    *map[string]bool
+	repoRepo repository.RepoRepository
 }
 
-func NewRepoSearch(params *models.SearchParams, config *common.Config, log common.Logger, repoRepo repository.RepoRepository, cache *map[string]bool) *RepoSearch {
+func NewRepoSearch(params *models.SearchParamsModel, config *common.Config, log common.Logger, repoRepo repository.RepoRepository, cache *map[string]bool) *RepoSearch {
 	gh := NewGithubSearch(config, log, cache)
 	return &RepoSearch{
 		params:   params,
 		gh:       gh,
 		log:      log,
 		repoRepo: repoRepo,
+		cache:    cache,
 	}
 }
 
 func (rs *RepoSearch) StartSearch(ctx context.Context) {
-	rs.log.Infof("Running search for params 'Query: %s', 'Params: %v'", rs.params.Query, *rs.params.Opts)
+	rs.log.Infof("Running search for params 'Query: %s', 'Params: %v' 'StartPage': %d, 'CurrentPage': %d, 'PagesToProcess': %d", rs.params.Query, rs.params.Opts, rs.params.StartPage, rs.params.CurrentPage, rs.params.PagesToProcess)
 	repos, err := rs.gh.FindRepositories(ctx, rs.params)
 	if err != nil {
 		rs.log.Errorf("Error fetching repositories: %v", err)
@@ -39,7 +40,9 @@ func (rs *RepoSearch) StartSearch(ctx context.Context) {
 		if err != nil {
 			rs.log.Errorf("Error creating repo in db: %v", err)
 		}
+
 		// Update the cache
 		(*rs.cache)[fmt.Sprintf("%s/%s", repo.Author, repo.Name)] = true
+		rs.log.Infof("[%s] Repo saved to DB", fmt.Sprintf("%s/%s", repo.Author, repo.Name))
 	}
 }

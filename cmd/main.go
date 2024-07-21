@@ -31,20 +31,21 @@ func main() {
 	stateRepo := repository.NewParserStateRepository(db)
 	linkRepo := repository.NewParserLinkRepository(db)
 
-	searchParams := &models.SearchParams{
+	searchParams := &models.SearchParamsModel{
 		Query: "stars:>10000",
-		Opts: &github.SearchOptions{
+		Opts: github.SearchOptions{
 			Sort:  "stars",
 			Order: "desc",
 			ListOptions: github.ListOptions{
 				PerPage: 5,
 			},
 		},
-		Page: 2,
+		StartPage:      100,
+		PagesToProcess: 2,
 	}
 
 	repoCache := search.NewRepoCache(repoRepo, logger)
-	search := search.NewRepoSearch(searchParams, config, logger, repoRepo, &repoCache)
+	search := search.NewRepoSearch(searchParams, config, logger, repoRepo, repoCache)
 	search.StartSearch(context.Background())
 
 	parser := parser.NewParser(logger, repoRepo, stateRepo, linkRepo)

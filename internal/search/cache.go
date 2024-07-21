@@ -7,7 +7,7 @@ import (
 	"github.com/jwtly10/googl-bye/internal/repository"
 )
 
-func NewRepoCache(repoRepo repository.RepoRepository, log common.Logger) map[string]bool {
+func NewRepoCache(repoRepo repository.RepoRepository, log common.Logger) *map[string]bool {
 	repoCache := make(map[string]bool)
 
 	// Preload all repos
@@ -20,7 +20,7 @@ func NewRepoCache(repoRepo repository.RepoRepository, log common.Logger) map[str
 		repoCache[fmt.Sprintf("%s/%s", repo.Author, repo.Name)] = true
 	}
 
-	log.Info("Cache loaded")
+	log.Infof("Cache loaded with %d repos", len(repos))
 
-	return repoCache
+	return &repoCache
 }
