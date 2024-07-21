@@ -37,7 +37,7 @@ func TestRepoRepository_Integration(t *testing.T) {
 	}
 	defer container.Terminate(context.Background())
 
-	repoRepo := repository.NewSQLRepoRepository(db)
+	repoRepo := repository.NewRepoRepository(db)
 
 	t.Run("Create repos", func(t *testing.T) {
 		for i := range repos {

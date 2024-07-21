@@ -26,7 +26,7 @@ func main() {
 		logger.Errorf("Error connecting to DB: %v", err)
 	}
 
-	repoRepo := repository.NewSQLRepoRepository(db)
+	repoRepo := repository.NewRepoRepository(db)
 
 	searchParams := &models.SearchParams{
 		Query: "language:go stars:>1000",

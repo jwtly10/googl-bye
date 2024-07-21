@@ -7,6 +7,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type GithubClientI interface {
+	SearchRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, error)
+}
+
 type GitHubClient struct {
 	client *github.Client
 }

@@ -9,12 +9,8 @@ import (
 	"github.com/jwtly10/googl-bye/internal/models"
 )
 
-type GithubClientI interface {
-	SearchRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, error)
-}
-
 type GithubSearch struct {
-	client GithubClientI
+	client common.GithubClientI
 	config *common.Config
 	log    common.Logger
 }
