@@ -17,10 +17,11 @@ CREATE TABLE IF NOT EXISTS parser_state_tb
     id                   SERIAL PRIMARY KEY,
     last_parsed_repo_id  INTEGER REFERENCES repository_tb(id),
     last_parsed_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS parser_results_tb
+CREATE TABLE IF NOT EXISTS parser_links_tb
 (
     id           SERIAL PRIMARY KEY,
     repo_id      INTEGER NOT NULL REFERENCES repository_tb(id),
