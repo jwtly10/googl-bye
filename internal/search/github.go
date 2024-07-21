@@ -51,7 +51,7 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.Se
 		repos = append(repos, parsedRepo)
 	}
 
-	ghs.log.Infof("Parsed %d repos", len(repos))
+	ghs.log.Infof("Saved %d repos", len(repos))
 
 	for _, r := range repos {
 		ghs.log.Debugf("%v", r)

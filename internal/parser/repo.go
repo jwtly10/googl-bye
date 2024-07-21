@@ -35,7 +35,7 @@ type FoundLinks struct {
 	Path        string
 }
 
-func (p *RepoParser) ParseRepository(repo models.RepositoryModel) ([]FoundLinks, error) {
+func (p *RepoParser) ParseRepository(repo models.RepositoryModel) ([]models.ParserLinksModel, error) {
 	p.log.Infof("[%s] Parsing repo", fmt.Sprintf("%s/%s", repo.Author, repo.Name))
 	tempDir, err := os.MkdirTemp("", fmt.Sprintf("%s%s%s%s%s", "repo-clone-", repo.Author, "-", repo.Name, "-"))
 	if err != nil {
@@ -60,9 +60,9 @@ func (p *RepoParser) ParseRepository(repo models.RepositoryModel) ([]FoundLinks,
 
 const maxFileSizeMB = 10
 
-func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest string) ([]FoundLinks, error) {
+func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest string) ([]models.ParserLinksModel, error) {
 	p.log.Infof("[%s] Parsing files", fmt.Sprintf("%s/%s", repo.Author, repo.Name))
-	var foundLinks []FoundLinks
+	var foundLinks []models.ParserLinksModel
 
 	err := filepath.Walk(dest, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -105,7 +105,7 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 					p.log.Errorf("Error expanding url '%s': %v", url, err)
 					expandedUrl = "error"
 				}
-				foundLinks = append(foundLinks, FoundLinks{
+				foundLinks = append(foundLinks, models.ParserLinksModel{
 					Url:         url,
 					ExpandedUrl: expandedUrl,
 					File:        relPath,

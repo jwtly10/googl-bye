@@ -26,7 +26,7 @@ func NewRepoSearch(params *models.SearchParams, config *common.Config, log commo
 }
 
 func (rs *RepoSearch) StartSearch(ctx context.Context) {
-	rs.log.Infof("Running search for params %v", rs.params)
+	rs.log.Infof("Running search for params 'Query: %s', 'Params: %v'", rs.params.Query, *rs.params.Opts)
 	repos, err := rs.gh.FindRepositories(ctx, rs.params)
 	if err != nil {
 		rs.log.Errorf("Error fetching repositories: %v", err)

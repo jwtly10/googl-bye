@@ -33,6 +33,7 @@ func (r *sqlParserStateRepository) handleError(err error) error {
 	return err
 }
 
+// TODO FIX THIS!!!!
 // GetParserState gets the current state of the parser
 func (r *sqlParserStateRepository) GetParserState() (*models.ParserStateModel, error) {
 	id := 1
