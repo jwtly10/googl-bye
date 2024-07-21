@@ -43,4 +43,5 @@ func main() {
 	search := search.NewRepoSearch(searchParams, config, logger, repoRepo)
 
 	search.StartSearch(context.Background())
+
 }

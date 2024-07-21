@@ -12,8 +12,8 @@ import (
 
 type RepoRepository interface {
 	CreateRepo(Repo *models.RepositoryModel) error
-	GetRepoByID(id string) (*models.RepositoryModel, error)
-	DeleteRepo(id string) error
+	GetRepoByID(id int) (*models.RepositoryModel, error)
+	DeleteRepo(id int) error
 	UpdateRepo(Repo *models.RepositoryModel) error
 }
 
@@ -38,11 +38,12 @@ func (r *sqlRepoRepository) handleError(err error) error {
 // CreateRepo inserts a new repo into the database
 func (r *sqlRepoRepository) CreateRepo(repo *models.RepositoryModel) error {
 	repo.BeforeCreate()
-	query := `INSERT INTO public.repository_tb (name, author, api_url, gh_url, clone_url )
-        VALUES ($1, $2, $3, $4, $5) RETURNING id`
+	query := `INSERT INTO public.repository_tb (name, author, parse_status, api_url, gh_url, clone_url )
+        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 	err := r.database.QueryRow(query,
 		repo.Name,
 		repo.Author,
+		"PENDING",
 		repo.ApiUrl,
 		repo.GhUrl,
 		repo.CloneUrl,
@@ -55,13 +56,14 @@ func (r *sqlRepoRepository) CreateRepo(repo *models.RepositoryModel) error {
 }
 
 // GetRepoByID retrieves a repo from the database by its unique ID
-func (r *sqlRepoRepository) GetRepoByID(id string) (*models.RepositoryModel, error) {
-	query := `SELECT id, name, author, api_url, gh_url, clone_url, created_at, updated_at FROM public.repository_tb WHERE id = $1`
+func (r *sqlRepoRepository) GetRepoByID(id int) (*models.RepositoryModel, error) {
+	query := `SELECT id, name, author, parse_status, api_url, gh_url, clone_url, created_at, updated_at FROM public.repository_tb WHERE id = $1`
 	repo := &models.RepositoryModel{}
 	err := r.database.QueryRow(query, id).Scan(
 		&repo.ID,
 		&repo.Name,
 		&repo.Author,
+		&repo.ParseStatus,
 		&repo.ApiUrl,
 		&repo.GhUrl,
 		&repo.CloneUrl,
@@ -77,7 +79,7 @@ func (r *sqlRepoRepository) GetRepoByID(id string) (*models.RepositoryModel, err
 // UpdateRepo updates a repo in the database
 func (r *sqlRepoRepository) UpdateRepo(repo *models.RepositoryModel) error {
 	repo.BeforeUpdate()
-	query := `UPDATE public.repository_tb SET name = $1, author = $2, api_url = $3, gh_url = $4, clone_url = $5 WHERE id = $6`
+	query := `UPDATE public.repository_tb SET name = $1, author = $2, parse_status = $3, api_url = $4, gh_url = $5, clone_url = $6 WHERE id = $7`
 	if repo.CreatedAt.Unix() == 0 {
 		return fmt.Errorf("unable to update a repo that was not loaded from the database")
 	}
@@ -85,6 +87,7 @@ func (r *sqlRepoRepository) UpdateRepo(repo *models.RepositoryModel) error {
 		query,
 		repo.Name,
 		repo.Author,
+		repo.ParseStatus,
 		repo.ApiUrl,
 		repo.GhUrl,
 		repo.CloneUrl,
@@ -104,7 +107,7 @@ func (r *sqlRepoRepository) UpdateRepo(repo *models.RepositoryModel) error {
 }
 
 // DeleteRepo deletes a repo from the database
-func (r *sqlRepoRepository) DeleteRepo(id string) error {
+func (r *sqlRepoRepository) DeleteRepo(id int) error {
 	query := `DELETE FROM public.repository_tb WHERE id = $1`
 	rs, err := r.database.Exec(query, id)
 	if err != nil {

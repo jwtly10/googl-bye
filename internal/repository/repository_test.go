@@ -44,7 +44,7 @@ func TestRepoRepository_Integration(t *testing.T) {
 			if err := repoRepo.CreateRepo(&repos[i]); err != nil {
 				t.Errorf("expected no error when creating repo but got %v", err)
 			}
-			if repos[i].ID == "" {
+			if repos[i].ID == 0 {
 				t.Error("expected repo ID to be set after creation")
 			}
 		}
@@ -74,7 +74,7 @@ func TestRepoRepository_Integration(t *testing.T) {
 			t.Errorf("expected no error when getting repo by ID but got %v", err)
 		}
 		if loaded.ID != repos[1].ID {
-			t.Errorf("expected loaded repo's id to match '%s' but was '%s'", repos[1].ID, loaded.ID)
+			t.Errorf("expected loaded repo's id to match '%d' but was '%d'", repos[1].ID, loaded.ID)
 		}
 	})
 
@@ -96,7 +96,7 @@ func TestRepoRepository_Integration(t *testing.T) {
 	t.Run("Fail to update non existing repo", func(t *testing.T) {
 		repos[0].Name = "Updated Name"
 		repos[0].Author = "Updated Author"
-		repos[0].ID = "bce72846-f5cc-4c3f-9d47-8af589dcd7bf"
+		repos[0].ID = 99
 
 		if err := repoRepo.UpdateRepo(&repos[0]); err == nil {
 			t.Error("expected error while attempting to update a repo that should not exist")

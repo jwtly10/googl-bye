@@ -13,7 +13,7 @@ func TestParseRepository(t *testing.T) {
 	logger := common.NewLogger(false, zapcore.DebugLevel)
 	git := NewGitCmdLine(logger)
 
-	parser := NewParser(git, logger)
+	parser := NewRepoParser(git, logger)
 
 	repo := models.RepositoryModel{
 		Name:     "googl-bye-test",
