@@ -55,6 +55,7 @@ func TestParserStateRepository_Integration(t *testing.T) {
 
 	t.Run("Set parser state", func(t *testing.T) {
 		state := &models.ParserStateModel{
+			Name:             "ParserJob",
 			LastParsedRepoId: repo1.ID,
 			LastParsedAt:     time.Now(),
 		}

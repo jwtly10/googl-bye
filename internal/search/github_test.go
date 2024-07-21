@@ -9,6 +9,8 @@ import (
 	"github.com/jwtly10/googl-bye/internal/common"
 	"github.com/jwtly10/googl-bye/internal/mock"
 	"github.com/jwtly10/googl-bye/internal/models"
+	"github.com/jwtly10/googl-bye/internal/repository"
+	"github.com/jwtly10/googl-bye/internal/test"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
 )
@@ -57,17 +59,29 @@ func TestFindRepositories(t *testing.T) {
 		},
 	}
 
+	container, db, err := test.NewTestDatabaseWithContainer(test.TestDatabaseConfiguration{
+		RootRelativePath: "../../",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer container.Terminate(context.Background())
+
+	searchRepo := repository.NewSearchParamRepository(db)
+
 	// Create a GithubSearch instance with the mock client
 	cache := make(map[string]bool)
 	gs := &GithubSearch{
-		client:    mockClient,
-		config:    &common.Config{},
-		log:       common.NewLogger(false, zapcore.DebugLevel),
-		repoCache: &cache,
+		client:     mockClient,
+		config:     &common.Config{},
+		log:        common.NewLogger(false, zapcore.DebugLevel),
+		repoCache:  &cache,
+		searchRepo: searchRepo,
 	}
 
 	// Call FindRepositories
 	query := &models.SearchParamsModel{
+		Name:           "unit_test_1",
 		StartPage:      0,
 		CurrentPage:    0,
 		PagesToProcess: 1,
@@ -139,19 +153,31 @@ func TestFindRepositoriesCacheHit(t *testing.T) {
 		},
 	}
 
+	container, db, err := test.NewTestDatabaseWithContainer(test.TestDatabaseConfiguration{
+		RootRelativePath: "../../",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer container.Terminate(context.Background())
+
+	searchRepo := repository.NewSearchParamRepository(db)
+
 	// Create a GithubSearch instance with the mock client
 	cache := make(map[string]bool)
 	// Adding one of the repos to cache
 	cache["owner1/repo1"] = true
 	gs := &GithubSearch{
-		client:    mockClient,
-		config:    &common.Config{},
-		log:       common.NewLogger(false, zapcore.DebugLevel),
-		repoCache: &cache,
+		client:     mockClient,
+		config:     &common.Config{},
+		log:        common.NewLogger(false, zapcore.DebugLevel),
+		repoCache:  &cache,
+		searchRepo: searchRepo,
 	}
 
 	// Call FindRepositories
 	query := &models.SearchParamsModel{
+		Name:  "unit_test_2",
 		Query: "stars:>10000",
 		Opts: github.SearchOptions{
 			Sort:  "stars",

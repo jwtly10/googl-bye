@@ -17,8 +17,8 @@ type RepoSearch struct {
 	repoRepo repository.RepoRepository
 }
 
-func NewRepoSearch(params *models.SearchParamsModel, config *common.Config, log common.Logger, repoRepo repository.RepoRepository, cache *map[string]bool) *RepoSearch {
-	gh := NewGithubSearch(config, log, cache)
+func NewRepoSearch(params *models.SearchParamsModel, config *common.Config, log common.Logger, repoRepo repository.RepoRepository, cache *map[string]bool, searchRepo repository.SearchParamRepository) *RepoSearch {
+	gh := NewGithubSearch(config, log, cache, searchRepo)
 	return &RepoSearch{
 		params:   params,
 		gh:       gh,

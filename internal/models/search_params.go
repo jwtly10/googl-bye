@@ -9,6 +9,7 @@ import (
 // SearchParamsModel represents the repository data stored in the database.
 type SearchParamsModel struct {
 	Model
+	Name           string               `db:"name" json:"name"`
 	Query          string               `db:"query" json:"query"`
 	Opts           github.SearchOptions `db:"opts" json:"opts"`
 	StartPage      int                  `db:"start_page" json:"startPage"`

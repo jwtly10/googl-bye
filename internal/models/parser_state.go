@@ -7,6 +7,7 @@ import (
 // ParserStateModel represents the repository data stored in the database.
 type ParserStateModel struct {
 	Model
+	Name             string    `db:"name" json:"name"`
 	LastParsedRepoId int       `db:"last_parsed_repo_id" json:"lastParsedRepoId"`
 	LastParsedAt     time.Time `db:"last_parsed_at" json:"lastParsedAt"`
 }
