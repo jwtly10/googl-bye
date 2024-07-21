@@ -14,6 +14,7 @@ type RepoRepository interface {
 	CreateRepo(Repo *models.RepositoryModel) error
 	GetRepoByID(id int) (*models.RepositoryModel, error)
 	GetPendingRepos() ([]models.RepositoryModel, error)
+	GetAllRepos() ([]models.RepositoryModel, error)
 	DeleteRepo(id int) error
 	UpdateRepo(Repo *models.RepositoryModel) error
 }
@@ -75,6 +76,43 @@ func (r *sqlRepoRepository) GetRepoByID(id int) (*models.RepositoryModel, error)
 		return nil, r.handleError(err)
 	}
 	return repo, nil
+}
+
+// GetAllRepos retrieves all repositories from the database
+func (r *sqlRepoRepository) GetAllRepos() ([]models.RepositoryModel, error) {
+	query := `SELECT id, name, author, parse_status, api_url, gh_url, clone_url, created_at, updated_at FROM public.repository_tb`
+
+	rows, err := r.database.Query(query)
+	if err != nil {
+		return nil, r.handleError(err)
+	}
+	defer rows.Close()
+
+	var repos []models.RepositoryModel
+	for rows.Next() {
+		var repo models.RepositoryModel
+		err := rows.Scan(
+			&repo.ID,
+			&repo.Name,
+			&repo.Author,
+			&repo.ParseStatus,
+			&repo.ApiUrl,
+			&repo.GhUrl,
+			&repo.CloneUrl,
+			&repo.CreatedAt,
+			&repo.UpdatedAt,
+		)
+		if err != nil {
+			return nil, r.handleError(err)
+		}
+		repos = append(repos, repo)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, r.handleError(err)
+	}
+
+	return repos, nil
 }
 
 // GetPendingRepos retrieves all pending repositories from the database

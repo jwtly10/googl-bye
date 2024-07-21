@@ -37,18 +37,16 @@ func main() {
 			Sort:  "stars",
 			Order: "desc",
 			ListOptions: github.ListOptions{
-				PerPage: 100,
+				PerPage: 5,
 			},
 		},
 		Page: 2,
 	}
 
-	_ = search.NewRepoSearch(searchParams, config, logger, repoRepo)
-
-	search := search.NewRepoSearch(searchParams, config, logger, repoRepo)
+	repoCache := search.NewRepoCache(repoRepo, logger)
+	search := search.NewRepoSearch(searchParams, config, logger, repoRepo, &repoCache)
 	search.StartSearch(context.Background())
 
 	parser := parser.NewParser(logger, repoRepo, stateRepo, linkRepo)
-
-	parser.StartParser(context.Background(), 5)
+	parser.StartParser(context.Background(), -1)
 }

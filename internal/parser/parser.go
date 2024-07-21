@@ -38,13 +38,14 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 		p.log.Errorf("Error getting pending repos: %v", err)
 	}
 
-	p.log.Infof("Found '%v' repos", len(reposToParse))
+	p.log.Infof("Found '%v' repos in state pending", len(reposToParse))
 
 	// Parse the repos
 	var lastRepo models.RepositoryModel
 	for i, repo := range reposToParse {
 		if i > limit {
 			// We limit a 'run' to a certain number of repos
+			p.log.Infof("Parse limit '%d' reached. Stopping parsing run.", limit)
 			break
 		}
 		repo.ParseStatus = "PROCESSING"
@@ -69,21 +70,24 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 			}
 		}
 
-		// Update states
+		// Update states on success
 		repo.ParseStatus = "DONE"
 		err = p.repoRepo.UpdateRepo(&repo)
 		lastRepo = repo
 	}
 
-	jobState, err := p.stateRepo.GetParserState()
-	if err != nil {
-		p.log.Errorf("[%s] Error getting job state: %v", fmt.Sprintf("%s/%s", lastRepo.Author, lastRepo.Name), err)
+	if lastRepo != (models.RepositoryModel{}) {
+		jobState, err := p.stateRepo.GetParserState()
+		if err != nil {
+			p.log.Errorf("[%s] Error getting job state: %v", fmt.Sprintf("%s/%s", lastRepo.Author, lastRepo.Name), err)
+		}
+		jobState.LastParsedAt = time.Now()
+		jobState.LastParsedRepoId = lastRepo.ID
+		err = p.stateRepo.SetParserState(jobState)
+		if err != nil {
+			p.log.Errorf("[%s] Error saving parser state: %v", fmt.Sprintf("%s/%s", lastRepo.Author, lastRepo.Name), err)
+		}
+	} else {
+		p.log.Info("No last repo found during parsing. Will not update state.")
 	}
-	jobState.LastParsedAt = time.Now()
-	jobState.LastParsedRepoId = lastRepo.ID
-	err = p.stateRepo.SetParserState(jobState)
-	if err != nil {
-		p.log.Errorf("[%s] Error saving parser state: %v", fmt.Sprintf("%s/%s", lastRepo.Author, lastRepo.Name), err)
-	}
-
 }

@@ -10,18 +10,20 @@ import (
 )
 
 type GithubSearch struct {
-	client common.GithubClientI
-	config *common.Config
-	log    common.Logger
+	client    common.GithubClientI
+	config    *common.Config
+	log       common.Logger
+	repoCache *map[string]bool
 }
 
-func NewGithubSearch(config *common.Config, log common.Logger) *GithubSearch {
+func NewGithubSearch(config *common.Config, log common.Logger, repoCache *map[string]bool) *GithubSearch {
 	ghClient := common.NewGitHubClient(config.GHToken)
 
 	return &GithubSearch{
-		client: ghClient,
-		config: config,
-		log:    log,
+		client:    ghClient,
+		config:    config,
+		log:       log,
+		repoCache: repoCache,
 	}
 }
 
@@ -39,6 +41,13 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.Se
 	for _, repo := range ghRepos {
 		repoName := getStringOrEmpty(repo.Name)
 
+		// check the cache
+		if (*ghs.repoCache)[fmt.Sprintf("%s/%s", *repo.Owner.Login, repoName)] {
+			// If this repo is already in cache, skip doing anything with it
+			ghs.log.Infof("[%s] Cache hit", fmt.Sprintf("%s/%s", *repo.Owner.Login, repoName))
+			continue
+		}
+
 		ghs.log.Debugf("Trying to parse: %v", repo)
 		parsedRepo := models.RepositoryModel{
 			Name:     repoName,
@@ -51,7 +60,7 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.Se
 		repos = append(repos, parsedRepo)
 	}
 
-	ghs.log.Infof("Saved %d repos", len(repos))
+	ghs.log.Infof("Saved %d repos to DB", len(repos))
 
 	for _, r := range repos {
 		ghs.log.Debugf("%v", r)
@@ -68,10 +77,11 @@ func getStringOrEmpty(s *string) string {
 }
 
 // Gets either the login name or the nicely formatted owners name
+// TODO: Removing the nice name for now, only returning the login
 func getOwnerName(owner *github.User) string {
-	if owner != nil && owner.Name != nil {
-		return *owner.Name
-	}
+	// if owner != nil && owner.Name != nil {
+	// 	return *owner.Name
+	// }
 	if owner != nil && owner.Login != nil {
 		return *owner.Login
 	}

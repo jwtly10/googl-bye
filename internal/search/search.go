@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jwtly10/googl-bye/internal/common"
 	"github.com/jwtly10/googl-bye/internal/models"
@@ -13,10 +14,11 @@ type RepoSearch struct {
 	log      common.Logger
 	repoRepo repository.RepoRepository
 	gh       *GithubSearch
+	cache    *map[string]bool
 }
 
-func NewRepoSearch(params *models.SearchParams, config *common.Config, log common.Logger, repoRepo repository.RepoRepository) *RepoSearch {
-	gh := NewGithubSearch(config, log)
+func NewRepoSearch(params *models.SearchParams, config *common.Config, log common.Logger, repoRepo repository.RepoRepository, cache *map[string]bool) *RepoSearch {
+	gh := NewGithubSearch(config, log, cache)
 	return &RepoSearch{
 		params:   params,
 		gh:       gh,
@@ -37,5 +39,7 @@ func (rs *RepoSearch) StartSearch(ctx context.Context) {
 		if err != nil {
 			rs.log.Errorf("Error creating repo in db: %v", err)
 		}
+		// Update the cache
+		(*rs.cache)[fmt.Sprintf("%s/%s", repo.Author, repo.Name)] = true
 	}
 }
