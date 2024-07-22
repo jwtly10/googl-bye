@@ -55,109 +55,107 @@ export default function SearchForm({ searchParams, setSearchParams, handleSearch
     };
 
     return (
-        <Box position="relative">
+        <Box
+            position="relative"
+            sx={{
+                mb: 4,
+                filter: isSearching ? 'brightness(0.8)' : 'none',
+                transition: 'filter 0.3s ease-in-out',
+            }}
+        >
             <Card
                 sx={{
                     mb: 4,
                     p: 3,
-                    filter: isSearching ? 'brightness(0.8)' : 'none',
-                    transition: 'filter 0.3s ease-in-out',
                 }}
             >
-                <Card
-                    sx={{
-                        mb: 4,
-                        p: 3,
-                    }}
-                >
-                    <Typography variant="h4" gutterBottom>
-                        Parameters
-                    </Typography>
+                <Typography variant="h4" gutterBottom>
+                    Parameters
+                </Typography>
 
-                    <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Search Name"
-                        name="name"
-                        value={searchParams.name}
-                        onChange={handleChange}
-                        autoComplete="off"
-                    />
+                <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Search Name"
+                    name="name"
+                    value={searchParams.name}
+                    onChange={handleChange}
+                    autoComplete="off"
+                />
 
-                    <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Query"
-                        name="query"
-                        value={searchParams.query}
-                        onChange={handleChange}
-                    />
+                <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Query"
+                    name="query"
+                    value={searchParams.query}
+                    onChange={handleChange}
+                />
 
-                    <Grid container spacing={1}>
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth margin="normal">
-                                <InputLabel>Sort</InputLabel>
-                                <Select
-                                    name="sort"
-                                    value={searchParams.opts.sort}
-                                    onChange={handleOptsChange}
-                                    label="Sort"
-                                >
-                                    <MenuItem value="stars">Stars</MenuItem>
-                                    <MenuItem value="forks">Forks</MenuItem>
-                                    <MenuItem value="updated">Updated</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth margin="normal">
-                                <InputLabel>Order</InputLabel>
-                                <Select
-                                    name="order"
-                                    value={searchParams.opts.order}
-                                    onChange={handleOptsChange}
-                                    label="Order"
-                                >
-                                    <MenuItem value="asc">Ascending</MenuItem>
-                                    <MenuItem value="desc">Descending</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                <Grid container spacing={1}>
+                    <Grid item xs={12} md={6}>
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>Sort</InputLabel>
+                            <Select
+                                name="sort"
+                                value={searchParams.opts.sort}
+                                onChange={handleOptsChange}
+                                label="Sort"
+                            >
+                                <MenuItem value="stars">Stars</MenuItem>
+                                <MenuItem value="forks">Forks</MenuItem>
+                                <MenuItem value="updated">Updated</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Grid>
-
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                margin="normal"
-                                type="number"
-                                label="Start Page"
-                                name="startPage"
-                                value={searchParams.startPage}
-                                onChange={handleChange}
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                margin="normal"
-                                type="number"
-                                label="Pages to Process"
-                                name="pagesToProcess"
-                                value={searchParams.pagesToProcess}
-                                onChange={handleChange}
-                            />
-                        </Grid>
+                    <Grid item xs={12} md={6}>
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>Order</InputLabel>
+                            <Select
+                                name="order"
+                                value={searchParams.opts.order}
+                                onChange={handleOptsChange}
+                                label="Order"
+                            >
+                                <MenuItem value="asc">Ascending</MenuItem>
+                                <MenuItem value="desc">Descending</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Grid>
+                </Grid>
 
-                    <Grid container justifyContent="flex-end" sx={{ mt: 2 }}>
-                        <Grid item>
-                            <Button onClick={handleSearch} variant="contained" color="primary">
-                                Search
-                            </Button>
-                        </Grid>
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            margin="normal"
+                            type="number"
+                            label="Start Page"
+                            name="startPage"
+                            value={searchParams.startPage}
+                            onChange={handleChange}
+                        />
                     </Grid>
-                </Card>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            margin="normal"
+                            type="number"
+                            label="Pages to Process"
+                            name="pagesToProcess"
+                            value={searchParams.pagesToProcess}
+                            onChange={handleChange}
+                        />
+                    </Grid>
+                </Grid>
+
+                <Grid container justifyContent="flex-end" sx={{ mt: 2 }}>
+                    <Grid item>
+                        <Button onClick={handleSearch} variant="contained" color="primary">
+                            Search
+                        </Button>
+                    </Grid>
+                </Grid>
             </Card>
             <Backdrop
                 sx={{
