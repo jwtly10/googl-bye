@@ -108,9 +108,11 @@ export default function SearchPage() {
     });
 
     const validateForm = () => {
-        if (!searchParams.name.trim()) {
-            return 'Search Name is required';
-        }
+        // TODO: Generate UUID for name (so we can track searches)
+        // OR just drop it.. undecided
+        // if (!searchParams.name.trim()) {
+        //     return 'Search Name is required';
+        // }
 
         if (!searchParams.query.trim()) {
             return 'Query is required';

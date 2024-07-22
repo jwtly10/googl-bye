@@ -76,16 +76,6 @@ export default function SearchForm({ searchParams, setSearchParams, handleSearch
                 <TextField
                     fullWidth
                     margin="normal"
-                    label="Search Name"
-                    name="name"
-                    value={searchParams.name}
-                    onChange={handleChange}
-                    autoComplete="off"
-                />
-
-                <TextField
-                    fullWidth
-                    margin="normal"
                     label="Query"
                     name="query"
                     value={searchParams.query}
@@ -141,7 +131,7 @@ export default function SearchForm({ searchParams, setSearchParams, handleSearch
                             fullWidth
                             margin="normal"
                             type="number"
-                            label="Pages to Process"
+                            label="Pages to Process*"
                             name="pagesToProcess"
                             value={searchParams.pagesToProcess}
                             onChange={handleChange}
@@ -149,7 +139,13 @@ export default function SearchForm({ searchParams, setSearchParams, handleSearch
                     </Grid>
                 </Grid>
 
-                <Grid container justifyContent="flex-end" sx={{ mt: 2 }}>
+                <Grid container justifyContent="space-between" sx={{ mt: 2 }}>
+                    <Grid item>
+                        <Typography variant="caption">
+                            *Each page from GitHub can have a maximum of 100 results, with a total limit of 2000
+                            results.
+                        </Typography>
+                    </Grid>
                     <Grid item>
                         <Button onClick={handleSearch} variant="contained" color="primary">
                             Search
