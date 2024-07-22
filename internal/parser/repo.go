@@ -27,14 +27,6 @@ func NewRepoParser(git GitCmdLineI, log common.Logger) *RepoParser {
 	}
 }
 
-type FoundLinks struct {
-	Url         string
-	ExpandedUrl string
-	File        string
-	LineNumber  int
-	Path        string
-}
-
 func (p *RepoParser) ParseRepository(repo models.RepositoryModel) ([]models.ParserLinksModel, error) {
 	p.log.Infof("[%s] Parsing repo", fmt.Sprintf("%s/%s", repo.Author, repo.Name))
 	tempDir, err := os.MkdirTemp("", fmt.Sprintf("%s%s%s%s%s", "repo-clone-", repo.Author, "-", repo.Name, "-"))
@@ -49,7 +41,7 @@ func (p *RepoParser) ParseRepository(repo models.RepositoryModel) ([]models.Pars
 		return nil, err
 	}
 
-	// Parse the cloned repository
+	// Parse the files of cloned repository
 	links, err := p.parseRepositoryFiles(repo, tempDir)
 	if err != nil {
 		return nil, err
@@ -64,9 +56,15 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 	p.log.Infof("[%s] Parsing files", fmt.Sprintf("%s/%s", repo.Author, repo.Name))
 	var foundLinks []models.ParserLinksModel
 
+	// TODO: Review the error handling
+	// Currently if we find an error parsing a file, we just log it and continue
+	// The application can still function as intended if a few files are unable to be processed
+	// This could be because they are binary blobs, or some other minified file type, which we
+	// probably dont care about as they will most likely not container shortend urls.
 	err := filepath.Walk(dest, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			p.log.Errorf("Error walking dir: %v", err)
+			return nil
 		}
 
 		// Skip directories
@@ -76,19 +74,21 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 
 		// Check file size
 		if info.Size() > int64(maxFileSizeMB*1024*1024) {
-			p.log.Infof("Skipping large file: %s (%.2f MB)", path, float64(info.Size())/(1024*1024))
+			p.log.Infof("[%s] Skipping large file: %s (%.2f MB)", fmt.Sprintf("%s/%s", repo.Author, repo.Name), path, float64(info.Size())/(1024*1024))
 			return nil
 		}
 
 		// Open the file
 		file, err := os.Open(path)
 		if err != nil {
-			return err
+			p.log.Errorf("Error opening file: %v", err)
+			return nil
 		}
 		defer file.Close()
 
-		// TODO: Batch files ...
-		// This does work great for now however as it makes getting line numbers really easy
+		// TODO: Implement batch reading of binary data to reduce memory usage
+		// Using bufio.Reader or io.Reader with a fixed-size buffer to prevent loading entire file to memory
+		// Although current implementation works well, as we are limiting max file size and it also makes getting line numbers trivial
 		scanner := bufio.NewScanner(file)
 		lineNumber := 0
 
@@ -104,7 +104,7 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 				expandedUrl, err := expandGooGlLink(url)
 				if err != nil {
 					p.log.Errorf("Error expanding url '%s': %v", url, err)
-					expandedUrl = "error"
+					expandedUrl = fmt.Sprintf("ERROR: %s", err.Error())
 				}
 				foundLinks = append(foundLinks, models.ParserLinksModel{
 					Url:         url,
@@ -117,11 +117,21 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 		}
 
 		if err := scanner.Err(); err != nil {
-			// We can just log the error on a line and continue to the next line, but only if there less than 3 errors in a row
 			relPath, _ := filepath.Rel(dest, path)
-			p.log.Warnf("Error scanning line %d in file %v: %v. Continuing.", lineNumber, relPath, err)
-			errorsInFile++
-			if errorsInFile > 3 {
+			// This error happens alot and is out of our control
+			// (We can increase the buffer size of the scanner, but chosing against this for now)
+			// TODO: Review this
+			if err == bufio.ErrTooLong && strings.Contains(err.Error(), "token too long") {
+				// We can skip this error, but it it happens more than 3 times we should follow up
+				p.log.Debugf("Error scanning line %d in file %v: %v.", lineNumber, relPath, err)
+				errorsInFile++
+			} else {
+				p.log.Errorf("Error scanning line %d in file %v: %v.", lineNumber, relPath, err)
+				return err
+			}
+
+			if errorsInFile > 2 {
+				p.log.Errorf("Error scanning line %d in file %v: %v. This is the 3rd time in this file.", lineNumber, relPath, err)
 				errorsInFile = 0
 				return err
 			}

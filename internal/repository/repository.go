@@ -80,7 +80,7 @@ func (r *sqlRepoRepository) GetRepoByID(id int) (*models.RepositoryModel, error)
 
 // GetAllRepos retrieves all repositories from the database
 func (r *sqlRepoRepository) GetAllRepos() ([]models.RepositoryModel, error) {
-	query := `SELECT id, name, author, parse_status, api_url, gh_url, clone_url, created_at, updated_at FROM public.repository_tb`
+	query := `SELECT id, name, author, parse_status, api_url, gh_url, clone_url, error_msg, created_at, updated_at FROM public.repository_tb`
 
 	rows, err := r.database.Query(query)
 	if err != nil {
@@ -99,6 +99,7 @@ func (r *sqlRepoRepository) GetAllRepos() ([]models.RepositoryModel, error) {
 			&repo.ApiUrl,
 			&repo.GhUrl,
 			&repo.CloneUrl,
+			&repo.ErrorMsg,
 			&repo.CreatedAt,
 			&repo.UpdatedAt,
 		)
@@ -155,7 +156,7 @@ func (r *sqlRepoRepository) GetPendingRepos() ([]models.RepositoryModel, error) 
 // UpdateRepo updates a repo in the database
 func (r *sqlRepoRepository) UpdateRepo(repo *models.RepositoryModel) error {
 	repo.BeforeUpdate()
-	query := `UPDATE public.repository_tb SET name = $1, author = $2, parse_status = $3, api_url = $4, gh_url = $5, clone_url = $6 WHERE id = $7`
+	query := `UPDATE public.repository_tb SET name = $1, author = $2, parse_status = $3, api_url = $4, gh_url = $5, clone_url = $6, error_msg = $7 WHERE id = $8`
 	if repo.CreatedAt.Unix() == 0 {
 		return fmt.Errorf("unable to update a repo that was not loaded from the database")
 	}
@@ -167,6 +168,7 @@ func (r *sqlRepoRepository) UpdateRepo(repo *models.RepositoryModel) error {
 		repo.ApiUrl,
 		repo.GhUrl,
 		repo.CloneUrl,
+		repo.ErrorMsg,
 		repo.ID,
 	)
 	if err != nil {

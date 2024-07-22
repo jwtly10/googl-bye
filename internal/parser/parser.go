@@ -81,6 +81,13 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 				links, err := p.repoParser.ParseRepository(repo)
 				if err != nil {
 					p.log.Errorf("[%s] Error parsing repo: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
+					// If this fails, we should set state failed
+					repo.ParseStatus = "FAILED"
+					repo.ErrorMsg = err.Error()
+					err = p.repoRepo.UpdateRepo(&repo)
+					if err != nil {
+						p.log.Errorf("[%s] Error updating repo state: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
+					}
 				}
 
 				// Save any links

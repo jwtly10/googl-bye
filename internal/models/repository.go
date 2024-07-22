@@ -13,6 +13,7 @@ type RepositoryModel struct {
 	ApiUrl      string `db:"api_url" json:"apiUrl"`
 	GhUrl       string `db:"gh_url" json:"ghUrl"`
 	CloneUrl    string `db:"clone_url" json:"cloneUrl"`
+	ErrorMsg    string `db:"error_msg" json:"essorMsg"`
 }
 
 // BeforeUpdated overrides model lifecycle hook, updating the updated_at time.

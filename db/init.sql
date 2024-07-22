@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS repository_tb (
     api_url TEXT NOT NULL,
     gh_url TEXT NOT NULL,
     clone_url TEXT NOT NULL,
+    error_msg TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (name, author)
