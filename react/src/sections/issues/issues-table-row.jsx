@@ -8,6 +8,7 @@ import {
     TableCell,
     Typography,
     IconButton,
+    Alert,
     Collapse,
     Box,
     Paper,
@@ -29,6 +30,7 @@ export default function RepoTableRow({
     stars,
     forks,
     parseStatus,
+    errorMsg,
     issues,
     handleClick,
 }) {
@@ -104,6 +106,11 @@ export default function RepoTableRow({
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={9}>
                     <Collapse in={expandOpen} timeout="auto" unmountOnExit>
                         <Box sx={{ margin: 2 }}>
+                            {errorMsg && (
+                                <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
+                                    {errorMsg}
+                                </Alert>
+                            )}
                             <Typography variant="h6" gutterBottom component="div">
                                 Goo.gl Links Found
                             </Typography>

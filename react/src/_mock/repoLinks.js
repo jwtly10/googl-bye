@@ -11,6 +11,8 @@ export const generateMockReposLinks = () => {
             .toLowerCase()
             .replace(' ', '');
         const repoAuthor = faker.internet.userName();
+        const parseStatus = sample(['DONE', 'ERROR']);
+
         return {
             id: faker.string.uuid(),
             avatarUrl: `/assets/images/repos/repo_${repoId}.jpg`,
@@ -33,11 +35,11 @@ export const generateMockReposLinks = () => {
             forks: faker.number.int({ min: 0, max: 5000 }),
             lastCommit: faker.date.recent({ days: 30 }),
             size: faker.number.int({ min: 100, max: 1000000 }), // size in KB
-            parseStatus: sample(['DONE', 'ERROR']),
+            parseStatus: parseStatus,
             apiUrl: `https://api.github.com/repos/${repoAuthor}/${repoName}`,
             ghUrl: `https://github.com/${repoAuthor}/${repoName}`,
             cloneUrl: `https://github.com/${repoAuthor}/${repoName}.git`,
-            errorMsg: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.2 }),
+            errorMsg: parseStatus === 'ERROR' ? faker.lorem.sentence() : null,
             links: generateMockLinks(repoId, repoAuthor, repoName),
         };
     });

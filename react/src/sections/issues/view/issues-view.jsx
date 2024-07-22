@@ -174,6 +174,7 @@ export default function IssuesPage() {
                                                     avatarUrl={row.avatarUrl}
                                                     lastCommit={row.lastCommit}
                                                     issues={row.links}
+                                                    errorMsg={row.errorMsg}
                                                     selected={selected.indexOf(row.name) !== -1}
                                                     handleClick={(event) => handleClick(event, row.name)}
                                                 />
