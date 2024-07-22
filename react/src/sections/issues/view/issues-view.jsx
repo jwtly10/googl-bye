@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import {
     Stack,
     Table,
+    Button,
     Container,
     TableBody,
     TableRow,
@@ -11,25 +12,26 @@ import {
     TablePagination,
     Typography,
     Card,
+    Backdrop,
+    CircularProgress,
 } from '@mui/material';
 
-import { generateMockRepos } from 'src/_mock/repo';
+import { generateMockReposLinks } from 'src/_mock/repoLinks';
 
 import Scrollbar from 'src/components/scrollbar';
 
-import SearchForm from 'src/components/search/searchForm';
 import ErrorToast from 'src/components/toast/errorToast';
 
 import TableNoData from '../table-no-data';
-import RepoTableRow from '../search-table-row';
-import RepoTableHead from '../search-table-head';
+import RepoTableRow from '../issues-table-row';
+import RepoTableHead from '../issues-table-head';
 import TableEmptyRows from '../table-empty-rows';
-import RepoTableToolbar from '../search-table-toolbar';
+import RepoTableToolbar from '../issues-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from '../utils';
 
 // ----------------------------------------------------------------------
 
-export default function SearchPage() {
+export default function IssuesPage() {
     const [page, setPage] = useState(0);
     const [order, setOrder] = useState('asc');
     const [selected, setSelected] = useState([]);
@@ -37,20 +39,29 @@ export default function SearchPage() {
     const [filterName, setFilterName] = useState('');
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    const [isSearching, setIsSearching] = useState(false);
     const [errorToast, setErrorToast] = useState({ open: false, message: '' });
     const [repos, setRepos] = useState([]);
-    const [searchParams, setSearchParams] = useState({
-        name: '',
-        query: '',
-        opts: {
-            sort: '',
-            order: '',
-        },
-        startPage: 0,
-        currentPage: 0,
-        pagesToProcess: 1,
-    });
+
+    const [isLoading, setIsLoading] = useState([]);
+
+    useEffect(() => {
+        loadIssues();
+    }, []);
+
+    const refreshIssues = () => {
+        loadIssues();
+    };
+
+    function loadIssues() {
+        console.log('Getting repos state from db');
+        setIsLoading(true);
+        setTimeout(() => {
+            setRepos(generateMockReposLinks);
+            setSelected([]);
+            setIsLoading(false);
+            console.log('Lookup completed!');
+        }, 500);
+    }
 
     const handleSort = (event, id) => {
         const isAsc = orderBy === id && order === 'asc';
@@ -58,33 +69,6 @@ export default function SearchPage() {
             setOrder(isAsc ? 'desc' : 'asc');
             setOrderBy(id);
         }
-    };
-
-    const handleSelectAllClick = (event) => {
-        if (event.target.checked) {
-            const newSelecteds = repos.map((n) => n.name);
-            setSelected(newSelecteds);
-            return;
-        }
-        setSelected([]);
-    };
-
-    const handleClick = (event, name) => {
-        const selectedIndex = selected.indexOf(name);
-        let newSelected = [];
-        if (selectedIndex === -1) {
-            newSelected = newSelected.concat(selected, name);
-        } else if (selectedIndex === 0) {
-            newSelected = newSelected.concat(selected.slice(1));
-        } else if (selectedIndex === selected.length - 1) {
-            newSelected = newSelected.concat(selected.slice(0, -1));
-        } else if (selectedIndex > 0) {
-            newSelected = newSelected.concat(
-                selected.slice(0, selectedIndex),
-                selected.slice(selectedIndex + 1)
-            );
-        }
-        setSelected(newSelected);
     };
 
     const handleChangePage = (event, newPage) => {
@@ -99,6 +83,7 @@ export default function SearchPage() {
     const handleFilterByName = (event) => {
         setPage(0);
         setFilterName(event.target.value);
+        Bad;
     };
 
     const dataFiltered = applyFilter({
@@ -107,54 +92,8 @@ export default function SearchPage() {
         filterName,
     });
 
-    const validateForm = () => {
-        if (!searchParams.name.trim()) {
-            return 'Search Name is required';
-        }
-
-        if (!searchParams.query.trim()) {
-            return 'Query is required';
-        }
-
-        if (searchParams.startPage < 0) {
-            return 'Start Page must be at least 0';
-        }
-
-        if (searchParams.pagesToProcess < 1) {
-            return 'Pages to Process must be at least 1';
-        }
-
-        if (searchParams.pagesToProcess > 20) {
-            return 'Pages to Process is limited to 20';
-        }
-
-        return null;
-    };
-
     const handleCloseErrorToast = () => {
         setErrorToast({ open: false, message: '' });
-    };
-
-    const handleSearch = () => {
-        const error = validateForm();
-
-        if (error) {
-            setErrorToast({ open: true, message: error });
-            return;
-        }
-
-        setIsSearching(true);
-        console.log('Making github api search');
-        console.log(searchParams);
-        console.log('Starting search...');
-
-        // Here is were we implement search
-        setTimeout(() => {
-            setIsSearching(false);
-            setRepos(generateMockRepos);
-            setSelected([]);
-            console.log('Search completed!');
-        }, 1000);
     };
 
     const notFound = !dataFiltered.length && !!filterName;
@@ -162,23 +101,36 @@ export default function SearchPage() {
     return (
         <Container>
             <Stack direction="column" alignItems="left" justifyContent="space-between" mb={5}>
-                <Stack mb={1}>
-                    <Typography variant="h4">Search for new Repositories</Typography>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+                    <Typography variant="h4">Processed Repositories</Typography>
+                    <Button onClick={refreshIssues} variant="contained" color="primary">
+                        Refresh
+                    </Button>
                 </Stack>
                 <Typography variant="p">
-                    Here you can search GitHub for new repositories to add to the GooGL-Bye queue.
+                    Here you can find repositories in the system, which have goo.gl links still in their code
+                    base. You can perform actions such as raising automated issues or PRs from this page.
+                    (Coming soon)
                 </Typography>
             </Stack>
 
-            <SearchForm
-                setSearchParams={setSearchParams}
-                handleSearch={handleSearch}
-                searchParams={searchParams}
-                isSearching={isSearching}
-            />
-
-            {}
             <Card>
+                <Backdrop
+                    sx={{
+                        color: '#fff',
+                        zIndex: (theme) => theme.zIndex.drawer + 1,
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        borderRadius: 2,
+                    }}
+                    open={isLoading}
+                >
+                    <CircularProgress color="inherit" />
+                </Backdrop>
                 <RepoTableToolbar
                     numSelected={selected.length}
                     filterName={filterName}
@@ -194,13 +146,14 @@ export default function SearchPage() {
                                 rowCount={repos.length}
                                 numSelected={selected.length}
                                 onRequestSort={handleSort}
-                                onSelectAllClick={handleSelectAllClick}
                                 headLabel={[
                                     { id: 'name', label: 'Repository Name' },
                                     { id: 'author', label: 'Author' },
                                     { id: 'language', label: 'Language' },
                                     { id: 'stars', label: 'Stars', align: 'center' },
                                     { id: 'forks', label: 'Forks', align: 'center' },
+                                    { id: 'parseStatus', label: 'Status' },
+                                    { id: 'links', label: 'Links' },
                                     { id: '' },
                                 ]}
                             />
@@ -217,8 +170,10 @@ export default function SearchPage() {
                                                     language={row.language}
                                                     stars={row.stars}
                                                     forks={row.forks}
+                                                    parseStatus={row.parseStatus}
                                                     avatarUrl={row.avatarUrl}
                                                     lastCommit={row.lastCommit}
+                                                    issues={row.links}
                                                     selected={selected.indexOf(row.name) !== -1}
                                                     handleClick={(event) => handleClick(event, row.name)}
                                                 />

@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import Stack from '@mui/material/Stack';
-import Avatar from '@mui/material/Avatar';
 import Popover from '@mui/material/Popover';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
@@ -49,19 +47,6 @@ export default function RepoTableRow({
                 <TableCell>{language}</TableCell>
                 <TableCell align="center">{stars}</TableCell>
                 <TableCell align="center">{forks}</TableCell>
-                <TableCell>
-                    <Label
-                        color={
-                            (parseStatus === 'PENDING' && 'warning') ||
-                            (parseStatus === 'PROCESSING' && 'info') ||
-                            (parseStatus === 'DONE' && 'success') ||
-                            (parseStatus === 'ERROR' && 'error') ||
-                            'default'
-                        }
-                    >
-                        {parseStatus}
-                    </Label>
-                </TableCell>
                 <TableCell align="right">
                     <IconButton onClick={handleOpenMenu}>
                         <Iconify icon="eva:more-vertical-fill" />
