@@ -27,7 +27,7 @@ export const generateMockRepos = () => {
         forks: faker.number.int({ min: 0, max: 5000 }),
         lastCommit: faker.date.recent({ days: 30 }),
         size: faker.number.int({ min: 100, max: 1000000 }), // size in KB
-        parseStatus: sample(['PENDING', 'PROCESSING', 'DONE', 'ERROR']),
+        state: sample(['PENDING', 'PROCESSING', 'COMPLETED', 'ERROR']),
         apiUrl: `https://api.github.com/repos/${faker.internet.userName()}/${faker.helpers
             .uniqueArray(faker.word.words, 2)
             .join('-')

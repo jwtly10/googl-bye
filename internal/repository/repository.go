@@ -40,12 +40,17 @@ func (r *sqlRepoRepository) handleError(err error) error {
 // CreateRepo inserts a new repo into the database
 func (r *sqlRepoRepository) CreateRepo(repo *models.RepositoryModel) error {
 	repo.BeforeCreate()
-	query := `INSERT INTO public.repository_tb (name, author, parse_status, api_url, gh_url, clone_url )
-        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	query := `INSERT INTO public.repository_tb (name, author, state, language, stars, forks, size, last_push, api_url, gh_url, clone_url )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`
 	err := r.database.QueryRow(query,
 		repo.Name,
 		repo.Author,
 		"PENDING",
+		repo.Language,
+		repo.Stars,
+		repo.Forks,
+		repo.Size,
+		repo.LastPush,
 		repo.ApiUrl,
 		repo.GhUrl,
 		repo.CloneUrl,
@@ -59,13 +64,18 @@ func (r *sqlRepoRepository) CreateRepo(repo *models.RepositoryModel) error {
 
 // GetRepoByID retrieves a repo from the database by its unique ID
 func (r *sqlRepoRepository) GetRepoByID(id int) (*models.RepositoryModel, error) {
-	query := `SELECT id, name, author, parse_status, api_url, gh_url, clone_url, created_at, updated_at FROM public.repository_tb WHERE id = $1`
+	query := `SELECT id, name, author, state, language, stars, forks, size, last_push, api_url, gh_url, clone_url, created_at, updated_at FROM public.repository_tb WHERE id = $1`
 	repo := &models.RepositoryModel{}
 	err := r.database.QueryRow(query, id).Scan(
 		&repo.ID,
 		&repo.Name,
 		&repo.Author,
-		&repo.ParseStatus,
+		&repo.State,
+		&repo.Language,
+		&repo.Stars,
+		&repo.Forks,
+		&repo.Size,
+		&repo.LastPush,
 		&repo.ApiUrl,
 		&repo.GhUrl,
 		&repo.CloneUrl,
@@ -80,7 +90,7 @@ func (r *sqlRepoRepository) GetRepoByID(id int) (*models.RepositoryModel, error)
 
 // GetAllRepos retrieves all repositories from the database
 func (r *sqlRepoRepository) GetAllRepos() ([]models.RepositoryModel, error) {
-	query := `SELECT id, name, author, parse_status, api_url, gh_url, clone_url, error_msg, created_at, updated_at FROM public.repository_tb`
+	query := `SELECT id, name, author, state, language, stars, forks, size, last_push, api_url, gh_url, clone_url, error_msg, created_at, updated_at FROM public.repository_tb WHERE state != 'DELETED'`
 
 	rows, err := r.database.Query(query)
 	if err != nil {
@@ -95,7 +105,12 @@ func (r *sqlRepoRepository) GetAllRepos() ([]models.RepositoryModel, error) {
 			&repo.ID,
 			&repo.Name,
 			&repo.Author,
-			&repo.ParseStatus,
+			&repo.State,
+			&repo.Language,
+			&repo.Stars,
+			&repo.Forks,
+			&repo.Size,
+			&repo.LastPush,
 			&repo.ApiUrl,
 			&repo.GhUrl,
 			&repo.CloneUrl,
@@ -118,7 +133,7 @@ func (r *sqlRepoRepository) GetAllRepos() ([]models.RepositoryModel, error) {
 
 // GetPendingRepos retrieves all pending repositories from the database
 func (r *sqlRepoRepository) GetPendingRepos() ([]models.RepositoryModel, error) {
-	query := `SELECT id, name, author, parse_status, api_url, gh_url, clone_url, created_at, updated_at FROM public.repository_tb WHERE parse_status = 'PENDING'`
+	query := `SELECT id, name, author, state, language, stars, forks, size, last_push, api_url, gh_url, clone_url, created_at, updated_at FROM public.repository_tb WHERE state = 'PENDING'`
 
 	rows, err := r.database.Query(query)
 	if err != nil {
@@ -133,7 +148,12 @@ func (r *sqlRepoRepository) GetPendingRepos() ([]models.RepositoryModel, error) 
 			&repo.ID,
 			&repo.Name,
 			&repo.Author,
-			&repo.ParseStatus,
+			&repo.State,
+			&repo.Language,
+			&repo.Stars,
+			&repo.Forks,
+			&repo.Size,
+			&repo.LastPush,
 			&repo.ApiUrl,
 			&repo.GhUrl,
 			&repo.CloneUrl,
@@ -156,7 +176,7 @@ func (r *sqlRepoRepository) GetPendingRepos() ([]models.RepositoryModel, error) 
 // UpdateRepo updates a repo in the database
 func (r *sqlRepoRepository) UpdateRepo(repo *models.RepositoryModel) error {
 	repo.BeforeUpdate()
-	query := `UPDATE public.repository_tb SET name = $1, author = $2, parse_status = $3, api_url = $4, gh_url = $5, clone_url = $6, error_msg = $7 WHERE id = $8`
+	query := `UPDATE public.repository_tb SET name = $1, author = $2, state = $3, language = $4, stars = $5, forks = $6, size = $7, last_push = $8, api_url = $9, gh_url = $10, clone_url = $11, error_msg = $12 WHERE id = $13`
 	if repo.CreatedAt.Unix() == 0 {
 		return fmt.Errorf("unable to update a repo that was not loaded from the database")
 	}
@@ -164,7 +184,12 @@ func (r *sqlRepoRepository) UpdateRepo(repo *models.RepositoryModel) error {
 		query,
 		repo.Name,
 		repo.Author,
-		repo.ParseStatus,
+		repo.State,
+		repo.Language,
+		repo.Stars,
+		repo.Forks,
+		repo.Size,
+		repo.LastPush,
 		repo.ApiUrl,
 		repo.GhUrl,
 		repo.CloneUrl,
@@ -186,17 +211,21 @@ func (r *sqlRepoRepository) UpdateRepo(repo *models.RepositoryModel) error {
 
 // DeleteRepo deletes a repo from the database
 func (r *sqlRepoRepository) DeleteRepo(id int) error {
-	query := `DELETE FROM public.repository_tb WHERE id = $1`
+	query := `UPDATE public.repository_tb SET state = 'DELETED' WHERE id = $1`
 	rs, err := r.database.Exec(query, id)
 	if err != nil {
 		return r.handleError(err)
 	}
-	if affected, err := rs.RowsAffected(); affected < 1 {
-		if err != nil {
-			return err
-		}
+
+	affected, err := rs.RowsAffected()
+	if err != nil {
+		return r.handleError(err)
+	}
+
+	if affected == 0 {
 		return ErrRepoNotFound
 	}
+
 	return nil
 }
 

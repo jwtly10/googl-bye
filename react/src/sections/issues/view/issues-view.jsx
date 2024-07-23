@@ -152,7 +152,7 @@ export default function IssuesPage() {
                                     { id: 'language', label: 'Language' },
                                     { id: 'stars', label: 'Stars', align: 'center' },
                                     { id: 'forks', label: 'Forks', align: 'center' },
-                                    { id: 'parseStatus', label: 'Status' },
+                                    { id: 'state', label: 'Status' },
                                     { id: 'links', label: 'Links' },
                                     { id: '' },
                                 ]}
@@ -170,7 +170,7 @@ export default function IssuesPage() {
                                                     language={row.language}
                                                     stars={row.stars}
                                                     forks={row.forks}
-                                                    parseStatus={row.parseStatus}
+                                                    state={row.state}
                                                     avatarUrl={row.avatarUrl}
                                                     lastCommit={row.lastCommit}
                                                     issues={row.links}

@@ -19,7 +19,7 @@ export default function RepoTableRow({
     language,
     stars,
     forks,
-    parseStatus,
+    state,
     handleClick,
 }) {
     const [open, setOpen] = useState(null);
@@ -85,5 +85,5 @@ RepoTableRow.propTypes = {
     stars: PropTypes.number,
     forks: PropTypes.number,
     selected: PropTypes.bool,
-    parseStatus: PropTypes.string,
+    state: PropTypes.string,
 };

@@ -12,6 +12,7 @@ type ParserLinksModel struct {
 	ExpandedUrl string `db:"expanded_url" json:"expandedUrl"`
 	File        string `db:"file" json:"file"`
 	LineNumber  int    `db:"line_number" json:"lineNumber"`
+	GithubUrl   string `db:"github_url" json:"github_url"`
 	Path        string `db:"path" json:"path"`
 }
 

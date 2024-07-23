@@ -84,11 +84,11 @@ func TestRepoRepository_Integration(t *testing.T) {
 				t.Errorf("expected no error when deleting repo but got %v", err)
 			}
 			deletedRepo, err := repoRepo.GetRepoByID(repo.ID)
-			if deletedRepo != nil {
-				t.Errorf("expected deleted repo to be nil but was %v", deletedRepo)
+			if deletedRepo.State != "DELETED" {
+				t.Errorf("expected repo state to be deleted but was %v", deletedRepo.State)
 			}
-			if err != repository.ErrRepoNotFound {
-				t.Errorf("expected ErrRepoNotFound when attempting to get repo by id after deletion, but got %v", err)
+			if err != nil {
+				t.Errorf("expected no error when finding repo after deletion, but got %v", err)
 			}
 		}
 	})

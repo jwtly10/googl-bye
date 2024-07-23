@@ -1,0 +1,82 @@
+package repository
+
+import (
+	"database/sql"
+	"fmt"
+
+	"github.com/jwtly10/googl-bye/internal/models"
+)
+
+type RepoLinkRepository struct {
+	db *sql.DB
+}
+
+func NewRepoLinkRepository(db *sql.DB) *RepoLinkRepository {
+	return &RepoLinkRepository{db: db}
+}
+
+func (r *RepoLinkRepository) GetRepositoryWithLinks() ([]*models.RepoWithLinks, error) {
+	rows, err := r.db.Query(`
+        SELECT 
+            r.id, r.name, r.author, r.state, r.api_url, r.gh_url, 
+            r.language, r.stars, r.forks, r.size, r.last_push, r.clone_url, 
+            r.error_msg, r.created_at, r.updated_at,
+            l.id, l.url, l.expanded_url, l.file, l.line_number, 
+            l.path, l.created_at, l.updated_at
+        FROM 
+            repository_tb r
+        LEFT JOIN 
+            parser_links_tb l ON r.id = l.repo_id
+        WHERE 
+            (r.state = 'COMPLETED' OR r.state = 'ERROR')
+            AND (r.state = 'ERROR' OR l.id IS NOT NULL)
+        ORDER BY 
+            r.id, l.id
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	repositories := make(map[int]*models.RepoWithLinks)
+
+	for rows.Next() {
+		var r models.RepoWithLinks
+		var l models.Link
+		var linkID sql.NullInt64
+
+		err := rows.Scan(
+			&r.ID, &r.Name, &r.Author, &r.State, &r.ApiUrl, &r.GhUrl,
+			&r.Language, &r.Stars, &r.Forks, &r.Size, &r.LastPush, &r.CloneURL,
+			&r.ErrorMsg, &r.CreatedAt, &r.UpdatedAt,
+			&linkID, &l.Url, &l.ExpandedURL, &l.File, &l.LineNumber,
+			&l.Path, &l.CreatedAt, &l.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		repo, exists := repositories[r.ID]
+		if !exists {
+			repo = &r
+			repo.Links = make([]models.Link, 0)
+			repositories[r.ID] = repo
+		}
+
+		if linkID.Valid {
+			l.ID = int(linkID.Int64)
+			repo.Links = append(repo.Links, l)
+		}
+	}
+
+	result := make([]*models.RepoWithLinks, 0, len(repositories))
+	for _, repo := range repositories {
+		if repo.State == "COMPLETED" && len(repo.Links) == 0 {
+			return nil, fmt.Errorf("repository with id %d has 'COMPLETED' status but no links", repo.ID)
+		}
+		result = append(result, repo)
+	}
+
+	return result, nil
+
+}

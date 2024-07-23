@@ -29,7 +29,7 @@ export default function RepoTableRow({
     language,
     stars,
     forks,
-    parseStatus,
+    state,
     errorMsg,
     issues,
     handleClick,
@@ -84,14 +84,14 @@ export default function RepoTableRow({
                 <TableCell>
                     <Label
                         color={
-                            (parseStatus === 'PENDING' && 'warning') ||
-                            (parseStatus === 'PROCESSING' && 'info') ||
-                            (parseStatus === 'DONE' && 'success') ||
-                            (parseStatus === 'ERROR' && 'error') ||
+                            (state === 'PENDING' && 'warning') ||
+                            (state === 'PROCESSING' && 'info') ||
+                            (state === 'COMPLETED' && 'success') ||
+                            (state === 'ERROR' && 'error') ||
                             'default'
                         }
                     >
-                        {parseStatus}
+                        {state}
                     </Label>
                 </TableCell>
                 <TableCell align="center">{issues.length}</TableCell>
@@ -211,6 +211,6 @@ RepoTableRow.propTypes = {
     stars: PropTypes.number,
     forks: PropTypes.number,
     selected: PropTypes.bool,
-    parseStatus: PropTypes.string,
+    state: PropTypes.string,
     issues: PropTypes.array,
 };
