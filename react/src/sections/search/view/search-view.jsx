@@ -27,6 +27,8 @@ import TableEmptyRows from '../table-empty-rows';
 import RepoTableToolbar from '../search-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from '../utils';
 
+import { searchGithub } from 'src/api/client';
+
 // ----------------------------------------------------------------------
 
 export default function SearchPage() {
@@ -137,7 +139,7 @@ export default function SearchPage() {
         setErrorToast({ open: false, message: '' });
     };
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         const error = validateForm();
 
         if (error) {
@@ -150,13 +152,21 @@ export default function SearchPage() {
         console.log(searchParams);
         console.log('Starting search...');
 
-        // Here is were we implement search
-        setTimeout(() => {
+        try {
+            const res = await searchGithub(searchParams);
             setIsSearching(false);
-            setRepos(generateMockRepos);
+            console.log(res);
+
+            if (res === null) {
+                setRepos([]);
+            } else {
+                setRepos(res);
+            }
             setSelected([]);
             console.log('Search completed!');
-        }, 1000);
+        } catch (e) {
+            console.error('Error searching github: ' + e);
+        }
     };
 
     const notFound = !dataFiltered.length && !!filterName;
@@ -217,6 +227,7 @@ export default function SearchPage() {
                                                     name={row.name}
                                                     author={row.author}
                                                     language={row.language}
+                                                    ghUrl={row.ghUrl}
                                                     stars={row.stars}
                                                     forks={row.forks}
                                                     avatarUrl={row.avatarUrl}
@@ -234,9 +245,7 @@ export default function SearchPage() {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center">
-                                            <Typography variant="subtitle1">
-                                                No repositories found. Use the search to find repositories.
-                                            </Typography>
+                                            <Typography variant="subtitle1">No repositories found</Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}

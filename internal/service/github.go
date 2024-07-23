@@ -40,13 +40,17 @@ func (gs *GithubService) GithubSearch(r *http.Request) ([]models.RepositoryModel
 	if !strings.Contains(searchParams.Query, "size:<=50000") {
 		searchParams.Query = searchParams.Query + " size:<=50000"
 	}
+	// Force minimum stars > 300 (TODO: Review)
+	if !strings.Contains(searchParams.Query, "stars") {
+		searchParams.Query = searchParams.Query + " stars:>300"
+	}
 
 	githubOpts := &github.SearchOptions{
 		Sort:  searchParams.Opts.Sort,
 		Order: searchParams.Opts.Order,
 		ListOptions: github.ListOptions{
 			Page:    searchParams.StartPage,
-			PerPage: 100,
+			PerPage: 50,
 		},
 	}
 
@@ -86,7 +90,7 @@ func (gs *GithubService) validateBodyFromRequest(r *http.Request) (*models.Searc
 		return nil, errors.NewBadRequestError(fmt.Sprintf("error decoding request body: %v", err.Error()))
 	}
 
-	gs.log.Debugf("Decoded struct: %+v\n", searchParams)
+	gs.log.Debugf("Decoded struct: %+v", searchParams)
 
 	// Check if all required fields are present
 	missingFields := []string{}

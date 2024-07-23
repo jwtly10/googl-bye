@@ -58,17 +58,16 @@ func main() {
 
 	// Attach global middleware
 	loggerMw := middleware.NewRequestLoggerMiddleware(logger)
-	router.Use(loggerMw)
 
 	// Setup frontend routes
-	router.SetupSwagger()
-	router.ServeStaticFiles("./jambda-frontend/dist") // TODO: Should this only happen in dev. In prod we package binary with the frontend, and just ship the binary
+	// router.SetupSwagger() // TODO
+	router.ServeStaticFiles("./react/dist") // TODO: Should this only happen in dev. In prod we package binary with the frontend, and just ship the binary
 
 	// Setup Github route
 	ghs := search.NewGithubSearch(config, logger, searchRepo, repoRepo)
 	githubService := service.NewGithubService(*ghs, logger)
 	githubHandler := handlers.NewGithubHandler(logger, *githubService)
-	routes.NewGithubRoutes(router, logger, *githubHandler)
+	routes.NewGithubRoutes(router, logger, *githubHandler, loggerMw)
 
 	// Create a context that we can cancel to stop all goroutines
 	ctx, cancel := context.WithCancel(context.Background())

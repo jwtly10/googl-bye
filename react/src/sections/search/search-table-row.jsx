@@ -6,8 +6,8 @@ import Checkbox from '@mui/material/Checkbox';
 import MenuItem from '@mui/material/MenuItem';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
+import Link from '@mui/material/Link';
 import IconButton from '@mui/material/IconButton';
-import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
@@ -18,6 +18,7 @@ export default function RepoTableRow({
     author,
     language,
     stars,
+    ghUrl,
     forks,
     state,
     handleClick,
@@ -39,9 +40,17 @@ export default function RepoTableRow({
                     <Checkbox disableRipple checked={selected} onChange={handleClick} />
                 </TableCell>
                 <TableCell>
-                    <Typography variant="subtitle2" noWrap>
-                        {name}
-                    </Typography>
+                    <Link
+                        href={ghUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        underline="hover"
+                        color="inherit"
+                    >
+                        <Typography variant="subtitle2" noWrap>
+                            {name}
+                        </Typography>
+                    </Link>
                 </TableCell>
                 <TableCell>{author}</TableCell>
                 <TableCell>{language}</TableCell>
@@ -82,6 +91,7 @@ RepoTableRow.propTypes = {
     handleClick: PropTypes.func,
     language: PropTypes.string,
     name: PropTypes.string,
+    ghUrl: PropTypes.string,
     stars: PropTypes.number,
     forks: PropTypes.number,
     selected: PropTypes.bool,

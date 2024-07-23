@@ -3,11 +3,13 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/jwtly10/googl-bye/api/middleware"
-	"github.com/jwtly10/googl-bye/internal/common"
 	// _ "github.com/jwtly10/googl-bye/docs"
-	"github.com/swaggo/http-swagger/v2"
+	"github.com/jwtly10/googl-bye/internal/common"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type AppRouter struct {
@@ -32,8 +34,27 @@ func (r *AppRouter) handle(pattern string, handler http.Handler) {
 
 func (r *AppRouter) ServeStaticFiles(path string) {
 	fs := http.FileServer(http.Dir(path))
-	r.handle("/", fs)
+
+	r.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		// Check if the file exists
+		filePath := filepath.Join(path, req.URL.Path)
+		_, err := os.Stat(filePath)
+
+		if os.IsNotExist(err) || req.URL.Path == "/" {
+			// If the file doesn't exist or it's the root path, serve index.html
+			http.ServeFile(w, req, filepath.Join(path, "index.html"))
+			return
+		}
+
+		// Otherwise, use the default FileServer
+		http.StripPrefix("/", fs).ServeHTTP(w, req)
+	})
 }
+
+// func (r *AppRouter) ServeStaticFiles(path string) {
+// 	fs := http.FileServer(http.Dir(path))
+// 	r.handle("/", fs)
+// }
 
 func (r *AppRouter) SetupSwagger() {
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
