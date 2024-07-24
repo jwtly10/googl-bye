@@ -142,7 +142,7 @@ export default function SearchForm({ searchParams, setSearchParams, handleSearch
                 <Grid container justifyContent="space-between" sx={{ mt: 2 }}>
                     <Grid item>
                         <Typography variant="caption">
-                            *Each page from GitHub can have a maximum of 100 results, with a total limit of 2000
+                            *Each page from GitHub can have a maximum of 50 results, with a total limit of 500
                             results.
                         </Typography>
                     </Grid>

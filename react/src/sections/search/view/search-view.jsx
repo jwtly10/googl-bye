@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
     Stack,
@@ -19,6 +19,7 @@ import Scrollbar from 'src/components/scrollbar';
 
 import SearchForm from 'src/components/search/searchForm';
 import ErrorToast from 'src/components/toast/errorToast';
+import SuccessToast from 'src/components/toast/successToast';
 
 import TableNoData from '../table-no-data';
 import RepoTableRow from '../search-table-row';
@@ -27,7 +28,7 @@ import TableEmptyRows from '../table-empty-rows';
 import RepoTableToolbar from '../search-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from '../utils';
 
-import { searchGithub } from 'src/api/client';
+import { searchGithub, saveRepos } from 'src/api/client';
 
 // ----------------------------------------------------------------------
 
@@ -41,18 +42,31 @@ export default function SearchPage() {
 
     const [isSearching, setIsSearching] = useState(false);
     const [errorToast, setErrorToast] = useState({ open: false, message: '' });
+    const [successToast, setSuccessToast] = useState({ open: false, message: '' });
     const [repos, setRepos] = useState([]);
     const [searchParams, setSearchParams] = useState({
         name: '',
         query: '',
         opts: {
             sort: '',
-            order: '',
+            order: 'descending',
         },
         startPage: 0,
         currentPage: 0,
         pagesToProcess: 1,
     });
+
+    useEffect(() => {
+        // Load data from localStorage when component mounts
+        const storedRepos = localStorage.getItem('storedRepos');
+        if (storedRepos) {
+            setRepos(JSON.parse(storedRepos));
+        }
+    }, [setRepos]);
+
+    const saveToLocalStorage = (repos) => {
+        localStorage.setItem('storedRepos', JSON.stringify(repos));
+    };
 
     const handleSort = (event, id) => {
         const isAsc = orderBy === id && order === 'asc';
@@ -64,28 +78,31 @@ export default function SearchPage() {
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
-            const newSelecteds = repos.map((n) => n.name);
+            const newSelecteds = repos.map((n) => n);
             setSelected(newSelecteds);
             return;
         }
         setSelected([]);
     };
 
-    const handleClick = (event, name) => {
-        const selectedIndex = selected.indexOf(name);
+    const handleClick = (event, row, index) => {
+        const selectedIndex = selected.findIndex((item) => item === row);
         let newSelected = [];
+
         if (selectedIndex === -1) {
-            newSelected = newSelected.concat(selected, name);
+            // If the row is not in the selected array, add it
+            newSelected = [...selected, row];
         } else if (selectedIndex === 0) {
-            newSelected = newSelected.concat(selected.slice(1));
+            // If it's the first item, remove it
+            newSelected = selected.slice(1);
         } else if (selectedIndex === selected.length - 1) {
-            newSelected = newSelected.concat(selected.slice(0, -1));
+            // If it's the last item, remove it
+            newSelected = selected.slice(0, -1);
         } else if (selectedIndex > 0) {
-            newSelected = newSelected.concat(
-                selected.slice(0, selectedIndex),
-                selected.slice(selectedIndex + 1)
-            );
+            // If it's in the middle, remove it
+            newSelected = [...selected.slice(0, selectedIndex), ...selected.slice(selectedIndex + 1)];
         }
+
         setSelected(newSelected);
     };
 
@@ -128,7 +145,7 @@ export default function SearchPage() {
             return 'Pages to Process must be at least 1';
         }
 
-        if (searchParams.pagesToProcess > 20) {
+        if (searchParams.pagesToProcess > 10) {
             return 'Pages to Process is limited to 20';
         }
 
@@ -137,6 +154,10 @@ export default function SearchPage() {
 
     const handleCloseErrorToast = () => {
         setErrorToast({ open: false, message: '' });
+    };
+
+    const handleCloseSuccessToast = () => {
+        setSuccessToast({ open: false, message: '' });
     };
 
     const handleSearch = async () => {
@@ -154,19 +175,36 @@ export default function SearchPage() {
 
         try {
             const res = await searchGithub(searchParams);
-            setIsSearching(false);
-            console.log(res);
-
             if (res === null) {
                 setRepos([]);
+                saveToLocalStorage([]);
             } else {
                 setRepos(res);
+                saveToLocalStorage(res);
             }
-            setSelected([]);
+
             console.log('Search completed!');
         } catch (e) {
-            console.error('Error searching github: ' + e);
+            setErrorToast({ open: true, message: e.response.data.message });
         }
+
+        setSelected([]);
+        setIsSearching(false);
+    };
+
+    const handleSaveRepos = async () => {
+        console.log('Saving repos to db');
+        console.log('Rows to save:', selected);
+
+        try {
+            await saveRepos(selected);
+            setSuccessToast({ open: true, message: `${selected.length} repo(s) saved to DB.` });
+        } catch (e) {
+            console.log(e);
+            setErrorToast({ open: true, message: e.response.data.message });
+        }
+
+        setSelected([]);
     };
 
     const notFound = !dataFiltered.length && !!filterName;
@@ -195,6 +233,7 @@ export default function SearchPage() {
                     numSelected={selected.length}
                     filterName={filterName}
                     onFilterName={handleFilterByName}
+                    saveSelectedRepos={handleSaveRepos}
                 />
 
                 <Scrollbar>
@@ -221,9 +260,9 @@ export default function SearchPage() {
                                     <>
                                         {dataFiltered
                                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                            .map((row) => (
+                                            .map((row, index) => (
                                                 <RepoTableRow
-                                                    key={row.id}
+                                                    key={index}
                                                     name={row.name}
                                                     author={row.author}
                                                     language={row.language}
@@ -232,8 +271,8 @@ export default function SearchPage() {
                                                     forks={row.forks}
                                                     avatarUrl={row.avatarUrl}
                                                     lastCommit={row.lastCommit}
-                                                    selected={selected.indexOf(row.name) !== -1}
-                                                    handleClick={(event) => handleClick(event, row.name)}
+                                                    selected={selected.some((selectedRow) => selectedRow === row)}
+                                                    handleClick={(event) => handleClick(event, row, index)}
                                                 />
                                             ))}
                                         <TableEmptyRows
@@ -245,7 +284,7 @@ export default function SearchPage() {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center">
-                                            <Typography variant="subtitle1">No repositories found</Typography>
+                                            <Typography variant="subtitle1">No repositories found.</Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -267,6 +306,11 @@ export default function SearchPage() {
                 open={errorToast.open}
                 message={errorToast.message}
                 onClose={handleCloseErrorToast}
+            />
+            <SuccessToast
+                open={successToast.open}
+                message={successToast.message}
+                onClose={handleCloseSuccessToast}
             />
         </Container>
     );

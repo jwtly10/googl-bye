@@ -49,7 +49,10 @@ func main() {
 	searchRepo := repository.NewSearchParamRepository(db)
 
 	// Init repo cache
-	// repoCache := common.NewRepoCache(repoRepo, logger)
+	repoCache, err := common.NewRepoCache(repoRepo, logger)
+	if err != nil {
+		logger.Fatalf("Failed to create a repo cache on init: %v", err)
+	}
 
 	// ***** SERVER SETUP *****
 
@@ -68,6 +71,11 @@ func main() {
 	githubService := service.NewGithubService(*ghs, logger)
 	githubHandler := handlers.NewGithubHandler(logger, *githubService)
 	routes.NewGithubRoutes(router, logger, *githubHandler, loggerMw)
+
+	// Setup Repo route
+	repoService := service.NewRepoService(repoRepo, logger, repoCache)
+	repoHandler := handlers.NewRepoHandler(logger, *repoService)
+	routes.NewRepoRoutes(router, logger, *repoHandler, loggerMw)
 
 	// Create a context that we can cancel to stop all goroutines
 	ctx, cancel := context.WithCancel(context.Background())

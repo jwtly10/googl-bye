@@ -12,6 +12,7 @@ import (
 
 type RepoRepository interface {
 	CreateRepo(Repo *models.RepositoryModel) error
+	CreateRepos(Repo []*models.RepositoryModel) error
 	GetRepoByID(id int) (*models.RepositoryModel, error)
 	GetPendingRepos() ([]models.RepositoryModel, error)
 	GetAllRepos() ([]models.RepositoryModel, error)
@@ -35,6 +36,65 @@ func (r *sqlRepoRepository) handleError(err error) error {
 		return ErrRepoConnErr
 	}
 	return err
+}
+
+// CreateRepos inserts multiple new repos into the database using a transaction
+// By default we will DO NOTHING on CONFLICTS TODO: Review - is there a reason to ever update a repo on 'save'?
+func (r *sqlRepoRepository) CreateRepos(repos []*models.RepositoryModel) error {
+	// Start a transaction
+	tx, err := r.database.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	query := `
+        INSERT INTO public.repository_tb (name, author, state, language, stars, forks, size, last_push, api_url, gh_url, clone_url)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ON CONFLICT (name, author) DO NOTHING
+        RETURNING id`
+
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, repo := range repos {
+		repo.BeforeCreate()
+		var id int64
+		err := stmt.QueryRow(
+			repo.Name,
+			repo.Author,
+			"PENDING",
+			repo.Language,
+			repo.Stars,
+			repo.Forks,
+			repo.Size,
+			repo.LastPush,
+			repo.ApiUrl,
+			repo.GhUrl,
+			repo.CloneUrl,
+		).Scan(&id)
+
+		if err != nil && err != sql.ErrNoRows {
+			tx.Rollback()
+			return fmt.Errorf("failed to insert repo: %w", err)
+		}
+
+		if id != 0 {
+			repo.ID = int(id)
+			repo.AfterCreate()
+		}
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 // CreateRepo inserts a new repo into the database
