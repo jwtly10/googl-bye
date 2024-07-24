@@ -29,6 +29,7 @@ type Link struct {
 	ExpandedURL string    `json:"expandedUrl"`
 	File        string    `json:"file"`
 	LineNumber  int       `json:"lineNumber"`
+	GithubUrl   string    `json:"githubUrl"`
 	Path        string    `json:"path"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`

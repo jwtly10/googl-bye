@@ -30,28 +30,17 @@ export const searchGithub = async (searchParams) => {
 };
 
 export const saveRepos = async (reposFromGithub) => {
-    // We need to do some parsing as the repos from the golang server have the embedded model fields.
-    // We need to remove them before trying to post to the golang API
-
-    //     var body = [];
-    //     reposFromGithub.forEach((repo, _) => {
-    //         const item = {
-    //             name: repo.name,
-    //             author: repo.author,
-    //             language: repo.language,
-    //             stars: repo.stars,
-    //             forks: repo.forks,
-    //             size: repo.size,
-    //             lastPush: repo.lastPush,
-    //             apiUrl: repo.apiUrl,
-    //             ghUrl: repo.ghUrl,
-    //             cloneUrl: repo.cloneUrl,
-    //         };
-    //         body.push(item);
-    //     });
-
     try {
         const response = await axios.post(`${API_BASE_URL}/save`, JSON.stringify(reposFromGithub));
+        return handleResponse(response);
+    } catch (error) {
+        return handleError(error);
+    }
+};
+
+export const searchRepoLinks = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/repoLinks`);
         return handleResponse(response);
     } catch (error) {
         return handleError(error);

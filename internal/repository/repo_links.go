@@ -21,7 +21,7 @@ func (r *RepoLinkRepository) GetRepositoryWithLinks() ([]*models.RepoWithLinks, 
             r.id, r.name, r.author, r.state, r.api_url, r.gh_url, 
             r.language, r.stars, r.forks, r.size, r.last_push, r.clone_url, 
             r.error_msg, r.created_at, r.updated_at,
-            l.id, l.url, l.expanded_url, l.file, l.line_number, 
+            l.id, l.url, l.expanded_url, l.file, l.line_number, l.github_url,
             l.path, l.created_at, l.updated_at
         FROM 
             repository_tb r
@@ -31,7 +31,7 @@ func (r *RepoLinkRepository) GetRepositoryWithLinks() ([]*models.RepoWithLinks, 
             (r.state = 'COMPLETED' OR r.state = 'ERROR')
             AND (r.state = 'ERROR' OR l.id IS NOT NULL)
         ORDER BY 
-            r.id, l.id
+            r.id DESC, l.id
     `)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (r *RepoLinkRepository) GetRepositoryWithLinks() ([]*models.RepoWithLinks, 
 			&r.ID, &r.Name, &r.Author, &r.State, &r.ApiUrl, &r.GhUrl,
 			&r.Language, &r.Stars, &r.Forks, &r.Size, &r.LastPush, &r.CloneURL,
 			&r.ErrorMsg, &r.CreatedAt, &r.UpdatedAt,
-			&linkID, &l.Url, &l.ExpandedURL, &l.File, &l.LineNumber,
+			&linkID, &l.Url, &l.ExpandedURL, &l.File, &l.LineNumber, &l.GithubUrl,
 			&l.Path, &l.CreatedAt, &l.UpdatedAt,
 		)
 		if err != nil {

@@ -20,11 +20,6 @@ func NewRepoHandler(l common.Logger, r service.RepoService) *RepoHandler {
 	}
 }
 
-type response struct {
-	status  string
-	message string
-}
-
 func (rh *RepoHandler) Save(w http.ResponseWriter, r *http.Request) {
 	err := rh.service.SaveRepo(r)
 	if err != nil {

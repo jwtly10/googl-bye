@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,13 +37,13 @@ func (p *RepoParser) ParseRepository(repo models.RepositoryModel) ([]models.Pars
 	defer os.RemoveAll(tempDir)
 
 	// Clone the repository
-	err = p.git.Clone(repo.CloneUrl, tempDir)
+	branch, err := p.git.Clone(repo.CloneUrl, tempDir)
 	if err != nil {
 		return nil, err
 	}
 
 	// Parse the files of cloned repository
-	links, err := p.parseRepositoryFiles(repo, tempDir)
+	links, err := p.parseRepositoryFiles(repo, tempDir, branch)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (p *RepoParser) ParseRepository(repo models.RepositoryModel) ([]models.Pars
 
 const maxFileSizeMB = 10
 
-func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest string) ([]models.ParserLinksModel, error) {
+func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest string, branch string) ([]models.ParserLinksModel, error) {
 	p.log.Infof("[%s] Parsing files", fmt.Sprintf("%s/%s", repo.Author, repo.Name))
 	var foundLinks []models.ParserLinksModel
 
@@ -61,9 +62,19 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 	// The application can still function as intended if a few files are unable to be processed
 	// This could be because they are binary blobs, or some other minified file type, which we
 	// probably dont care about as they will most likely not container shortend urls.
+	// Also when url expanding fails, we dont handle this error properly. We just log and continue
 	err := filepath.Walk(dest, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			p.log.Errorf("Error walking dir: %v", err)
+			if os.IsPermission(err) {
+				p.log.Warnf("Permission denied: %v", err)
+				return nil
+			}
+
+			if info != nil && info.IsDir() {
+				p.log.Debugf("Skipping directory: %v", path)
+				return nil
+			}
+			p.log.Errorf("Error accessing path %s: %v", path, err)
 			return nil
 		}
 
@@ -103,7 +114,7 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 				url := extractGooGlLink(line)
 				expandedUrl, err := expandGooGlLink(url)
 				if err != nil {
-					p.log.Errorf("Error expanding url '%s': %v", url, err)
+					p.log.Errorf("[%s] Error expanding url: '%s': %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), url, err)
 					expandedUrl = fmt.Sprintf("ERROR: %s", err.Error())
 				}
 				foundLinks = append(foundLinks, models.ParserLinksModel{
@@ -111,6 +122,7 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 					ExpandedUrl: expandedUrl,
 					File:        relPath,
 					LineNumber:  lineNumber,
+					GithubUrl:   generateGithubUrlOfUrl(&repo, branch, relPath, lineNumber),
 					Path:        path,
 				})
 			}
@@ -123,15 +135,15 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 			// TODO: Review this
 			if err == bufio.ErrTooLong && strings.Contains(err.Error(), "token too long") {
 				// We can skip this error, but it it happens more than 3 times we should follow up
-				p.log.Debugf("Error scanning line %d in file %v: %v.", lineNumber, relPath, err)
+				p.log.Debugf("[%s] Error scanning line %d in file %v: %v.", fmt.Sprintf("%s/%s", repo.Author, repo.Name), lineNumber, relPath, err)
 				errorsInFile++
 			} else {
-				p.log.Errorf("Error scanning line %d in file %v: %v.", lineNumber, relPath, err)
+				p.log.Errorf("[%s] Error scanning line %d in file %v: %v.", fmt.Sprintf("%s/%s", repo.Author, repo.Name), lineNumber, relPath, err)
 				return err
 			}
 
 			if errorsInFile > 2 {
-				p.log.Errorf("Error scanning line %d in file %v: %v. This is the 3rd time in this file.", lineNumber, relPath, err)
+				p.log.Errorf("[%s] (WARN: 3rd Time) Error scanning line %d in file %v: %v.", fmt.Sprintf("%s/%s", repo.Author, repo.Name), lineNumber, relPath, err)
 				errorsInFile = 0
 				return err
 			}
@@ -147,8 +159,40 @@ func (p *RepoParser) parseRepositoryFiles(repo models.RepositoryModel, dest stri
 	return foundLinks, nil
 }
 
+func generateGithubUrlOfUrl(repo *models.RepositoryModel, branch, filePath string, lineNumber int) string {
+	// Ensure the owner and name are available in the RepositoryModel
+	owner := repo.Author // Assuming Author is used for the owner
+	name := repo.Name
+
+	// URL encode the file path to handle special characters
+	encodedFilePath := url.PathEscape(filePath)
+
+	// Construct the base GitHub URL
+	githubUrl := fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s",
+		owner, name, branch, encodedFilePath)
+
+	// Check if the file is a Markdown file
+	isMarkdown := strings.HasSuffix(strings.ToLower(filePath), ".md")
+
+	// Add ?plain=1 for Markdown files
+	if isMarkdown {
+		githubUrl += "?plain=1"
+	}
+
+	// Add line number if provided
+	if lineNumber > 0 {
+		if isMarkdown {
+			githubUrl += fmt.Sprintf("#L%d", lineNumber)
+		} else {
+			githubUrl += fmt.Sprintf("#L%d", lineNumber)
+		}
+	}
+
+	return githubUrl
+}
+
 func extractGooGlLink(line string) string {
-	re := regexp.MustCompile(`(?i)(?:https?://)?goo\.gl/[a-zA-Z0-9_-]+`)
+	re := regexp.MustCompile(`(?i)(?:https?://)?goo\.gl(?:/forms)?/[a-zA-Z0-9_-]+`)
 	match := re.FindString(line)
 	return match
 }

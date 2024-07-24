@@ -29,6 +29,8 @@ import TableEmptyRows from '../table-empty-rows';
 import RepoTableToolbar from '../issues-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from '../utils';
 
+import { searchRepoLinks } from 'src/api/client';
+
 // ----------------------------------------------------------------------
 
 export default function IssuesPage() {
@@ -45,22 +47,40 @@ export default function IssuesPage() {
     const [isLoading, setIsLoading] = useState([]);
 
     useEffect(() => {
-        loadIssues();
+        async function fetchData() {
+            await loadIssues();
+        }
+        fetchData();
     }, []);
 
-    const refreshIssues = () => {
-        loadIssues();
+    const refreshIssues = async () => {
+        await loadIssues();
     };
 
-    function loadIssues() {
+    async function loadIssues() {
         console.log('Getting repos state from db');
         setIsLoading(true);
-        setTimeout(() => {
-            setRepos(generateMockReposLinks);
-            setSelected([]);
-            setIsLoading(false);
-            console.log('Lookup completed!');
-        }, 500);
+
+        try {
+            const res = await searchRepoLinks();
+            if (res === null) {
+                setRepos([]);
+            } else {
+                setRepos(res);
+            }
+            console.log('Search completed!');
+        } catch (e) {
+            setErrorToast({ open: true, message: e.response.data.message });
+        }
+        setSelected([]);
+        setIsLoading(false);
+
+        // setTimeout(() => {
+        //     setRepos(generateMockReposLinks);
+        //     setSelected([]);
+        //     setIsLoading(false);
+        //     console.log('Lookup completed!');
+        // }, 500);
     }
 
     const handleSort = (event, id) => {
@@ -170,13 +190,13 @@ export default function IssuesPage() {
                                                     language={row.language}
                                                     stars={row.stars}
                                                     forks={row.forks}
+                                                    ghUrl={row.ghUrl}
                                                     state={row.state}
                                                     avatarUrl={row.avatarUrl}
                                                     lastCommit={row.lastCommit}
                                                     issues={row.links}
                                                     errorMsg={row.errorMsg}
                                                     selected={selected.indexOf(row.name) !== -1}
-                                                    handleClick={(event) => handleClick(event, row.name)}
                                                 />
                                             ))}
                                         <TableEmptyRows

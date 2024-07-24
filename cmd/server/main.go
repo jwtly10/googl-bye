@@ -44,6 +44,7 @@ func main() {
 
 	// Init repos
 	repoRepo := repository.NewRepoRepository(db)
+	repoLinkRepo := repository.NewRepoLinkRepository(db)
 	stateRepo := repository.NewParserStateRepository(db)
 	linkRepo := repository.NewParserLinkRepository(db)
 	searchRepo := repository.NewSearchParamRepository(db)
@@ -76,6 +77,11 @@ func main() {
 	repoService := service.NewRepoService(repoRepo, logger, repoCache)
 	repoHandler := handlers.NewRepoHandler(logger, *repoService)
 	routes.NewRepoRoutes(router, logger, *repoHandler, loggerMw)
+
+	// Setup RepoLink route
+	repoLinkService := service.NewRepoLinkService(*repoLinkRepo, logger)
+	repoLinkHandler := handlers.NewRepoLinkHandler(logger, *repoLinkService)
+	routes.NewRepoLinkRoutes(router, logger, *repoLinkHandler, loggerMw)
 
 	// Create a context that we can cancel to stop all goroutines
 	ctx, cancel := context.WithCancel(context.Background())

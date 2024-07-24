@@ -19,6 +19,8 @@ import {
     Tooltip,
     TableBody,
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
+
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 
@@ -28,11 +30,11 @@ export default function RepoTableRow({
     author,
     language,
     stars,
+    ghUrl,
     forks,
     state,
     errorMsg,
     issues,
-    handleClick,
 }) {
     const [open, setOpen] = useState(null);
     const [expandOpen, setExpandOpen] = useState(false);
@@ -49,9 +51,15 @@ export default function RepoTableRow({
         setExpandOpen(!expandOpen);
     };
 
+    const StyledTableCell = styled(TableCell)({
+        maxWidth: '200px',
+        wordWrap: 'break-word',
+        overflowWrap: 'break-word',
+    });
+
     return (
         <>
-            <TableRow hover tabIndex={-1} role="checkbox" selected={selected} onClick={handleClick}>
+            <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
                 <TableCell
                     padding="checkbox"
                     sx={{
@@ -73,9 +81,17 @@ export default function RepoTableRow({
                     </IconButton>
                 </TableCell>
                 <TableCell>
-                    <Typography variant="subtitle2" noWrap>
-                        {name}
-                    </Typography>
+                    <Link
+                        href={ghUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        underline="hover"
+                        color="inherit"
+                    >
+                        <Typography variant="subtitle2" noWrap>
+                            {name}
+                        </Typography>
+                    </Link>
                 </TableCell>
                 <TableCell>{author}</TableCell>
                 <TableCell>{language}</TableCell>
@@ -123,7 +139,6 @@ export default function RepoTableRow({
                                                 <TableCell>Expanded URL</TableCell>
                                                 <TableCell>File</TableCell>
                                                 <TableCell>Line Number</TableCell>
-                                                <TableCell>Actions</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -134,7 +149,7 @@ export default function RepoTableRow({
                                                             {link.url}
                                                         </Link>
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <StyledTableCell>
                                                         {link.expandedUrl.startsWith('ERROR:') ? (
                                                             <Typography color="error">{link.expandedUrl}</Typography>
                                                         ) : (
@@ -146,21 +161,13 @@ export default function RepoTableRow({
                                                                 {link.expandedUrl}
                                                             </Link>
                                                         )}
-                                                    </TableCell>
-                                                    <TableCell>{link.file}</TableCell>
+                                                    </StyledTableCell>
+                                                    <StyledTableCell>
+                                                        <Link href={link.githubUrl} target="_blank" rel="noopener noreferrer">
+                                                            {link.file}
+                                                        </Link>
+                                                    </StyledTableCell>
                                                     <TableCell>{link.lineNumber}</TableCell>
-                                                    <TableCell>
-                                                        <Tooltip title="View on GitHub">
-                                                            <IconButton
-                                                                size="small"
-                                                                href={link.githubUrl}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                            >
-                                                                <Iconify icon="mdi:github" width={20} height={20} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -205,9 +212,9 @@ export default function RepoTableRow({
 
 RepoTableRow.propTypes = {
     author: PropTypes.string,
-    handleClick: PropTypes.func,
     language: PropTypes.string,
     name: PropTypes.string,
+    ghUrl: PropTypes.string,
     stars: PropTypes.number,
     forks: PropTypes.number,
     selected: PropTypes.bool,
