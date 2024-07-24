@@ -21,8 +21,48 @@ func NewGithubHandler(l common.Logger, g service.GithubService) *GithubHandler {
 	}
 }
 
-func (gh *GithubHandler) Search(w http.ResponseWriter, r *http.Request) {
-	res, err := gh.service.GithubSearch(r)
+func (gh *GithubHandler) SearchRepos(w http.ResponseWriter, r *http.Request) {
+	res, err := gh.service.GithubSearchRepos(r)
+	if err != nil {
+		gh.log.Error("github search failed with error: ", err)
+		utils.HandleCustomErrors(w, err)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(res)
+	if err != nil {
+		gh.log.Error("marshaling response failed with error: ", err)
+		utils.HandleCustomErrors(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+func (gh *GithubHandler) SearchReposForUser(w http.ResponseWriter, r *http.Request) {
+	res, err := gh.service.GithubSearchReposForUser(r)
+	if err != nil {
+		gh.log.Error("github search failed with error: ", err)
+		utils.HandleCustomErrors(w, err)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(res)
+	if err != nil {
+		gh.log.Error("marshaling response failed with error: ", err)
+		utils.HandleCustomErrors(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+func (gh *GithubHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	res, err := gh.service.GithubSearchUsers(r)
 	if err != nil {
 		gh.log.Error("github search failed with error: ", err)
 		utils.HandleCustomErrors(w, err)

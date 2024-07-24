@@ -33,6 +33,16 @@ func NewGithubSearch(config *common.Config, log common.Logger, searchRepo reposi
 	}
 }
 
+func (ghs *GithubSearch) FindUsers(ctx context.Context, userName string) ([]*github.User, error) {
+	users, _, err := ghs.client.SearchForUser(ctx, userName)
+	if err != nil {
+		ghs.log.Errorf("Error searching users: %v", err)
+		return nil, err
+	}
+	ghs.log.Infof("Found %d users from API", len(users))
+	return users, nil
+}
+
 func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.SearchParamsModel) (allRepos []models.RepositoryModel, err error) {
 	defer func() {
 		if r := recover(); r != nil {

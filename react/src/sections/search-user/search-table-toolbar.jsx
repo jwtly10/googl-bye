@@ -10,7 +10,12 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-export default function RepoTableToolbar({ numSelected, filterName, onFilterName }) {
+export default function RepoTableToolbar({
+    saveSelectedRepos,
+    numSelected,
+    filterName,
+    onFilterName,
+}) {
     return (
         <Toolbar
             sx={{
@@ -45,8 +50,8 @@ export default function RepoTableToolbar({ numSelected, filterName, onFilterName
             )}
 
             {numSelected > 0 && (
-                <Button variant="contained" color="primary">
-                    Save selected repos
+                <Button onClick={saveSelectedRepos} variant="contained" color="primary">
+                    Process selected repos
                 </Button>
             )}
         </Toolbar>
@@ -54,6 +59,7 @@ export default function RepoTableToolbar({ numSelected, filterName, onFilterName
 }
 
 RepoTableToolbar.propTypes = {
+    saveSelectedRepos: PropTypes.func,
     numSelected: PropTypes.number,
     filterName: PropTypes.string,
     onFilterName: PropTypes.func,

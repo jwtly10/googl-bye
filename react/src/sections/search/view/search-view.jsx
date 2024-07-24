@@ -28,7 +28,7 @@ import TableEmptyRows from '../table-empty-rows';
 import RepoTableToolbar from '../search-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from '../utils';
 
-import { searchGithub, saveRepos } from 'src/api/client';
+import { searchGithubRepos, saveRepos } from 'src/api/client';
 
 // ----------------------------------------------------------------------
 
@@ -100,7 +100,10 @@ export default function SearchPage() {
             newSelected = selected.slice(0, -1);
         } else if (selectedIndex > 0) {
             // If it's in the middle, remove it
-            newSelected = [...selected.slice(0, selectedIndex), ...selected.slice(selectedIndex + 1)];
+            newSelected = [
+                ...selected.slice(0, selectedIndex),
+                ...selected.slice(selectedIndex + 1),
+            ];
         }
 
         setSelected(newSelected);
@@ -174,7 +177,7 @@ export default function SearchPage() {
         console.log('Starting search...');
 
         try {
-            const res = await searchGithub(searchParams);
+            const res = await searchGithubRepos(searchParams);
             if (res === null) {
                 setRepos([]);
                 saveToLocalStorage([]);
@@ -259,7 +262,10 @@ export default function SearchPage() {
                                 {repos.length > 0 ? (
                                     <>
                                         {dataFiltered
-                                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                            .slice(
+                                                page * rowsPerPage,
+                                                page * rowsPerPage + rowsPerPage
+                                            )
                                             .map((row, index) => (
                                                 <RepoTableRow
                                                     key={index}
@@ -271,8 +277,12 @@ export default function SearchPage() {
                                                     forks={row.forks}
                                                     avatarUrl={row.avatarUrl}
                                                     lastCommit={row.lastCommit}
-                                                    selected={selected.some((selectedRow) => selectedRow === row)}
-                                                    handleClick={(event) => handleClick(event, row, index)}
+                                                    selected={selected.some(
+                                                        (selectedRow) => selectedRow === row
+                                                    )}
+                                                    handleClick={(event) =>
+                                                        handleClick(event, row, index)
+                                                    }
                                                 />
                                             ))}
                                         <TableEmptyRows
@@ -284,7 +294,9 @@ export default function SearchPage() {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center">
-                                            <Typography variant="subtitle1">No repositories found.</Typography>
+                                            <Typography variant="subtitle1">
+                                                No repositories found.
+                                            </Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}

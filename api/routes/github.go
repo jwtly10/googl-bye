@@ -22,10 +22,22 @@ func NewGithubRoutes(router api.AppRouter, l common.Logger, h handlers.GithubHan
 
 	BASE_PATH := "/v1/api"
 
-	searchHandler := http.HandlerFunc(routes.h.Search)
+	searchRepoHandler := http.HandlerFunc(routes.h.SearchRepos)
 	router.Post(
 		BASE_PATH+"/search",
-		middleware.Chain(searchHandler, mws...),
+		middleware.Chain(searchRepoHandler, mws...),
+	)
+
+	searchUserRepoHandler := http.HandlerFunc(routes.h.SearchReposForUser)
+	router.Get(
+		BASE_PATH+"/search",
+		middleware.Chain(searchUserRepoHandler, mws...),
+	)
+
+	searchUserHandler := http.HandlerFunc(routes.h.SearchUsers)
+	router.Get(
+		BASE_PATH+"/search-user",
+		middleware.Chain(searchUserHandler, mws...),
 	)
 
 	return routes

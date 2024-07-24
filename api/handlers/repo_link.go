@@ -25,7 +25,27 @@ func NewRepoLinkHandler(l common.Logger, r service.RepoLinkService) *RepoLinkHan
 func (rlh *RepoLinkHandler) GetRepoLinks(w http.ResponseWriter, r *http.Request) {
 	repos, err := rlh.service.GetRepoLinks(r)
 	if err != nil {
-		rlh.log.Error("saving repos to databased failed with error: ", err)
+		rlh.log.Error("getting repo links from db failed with error: ", err)
+		utils.HandleCustomErrors(w, err)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(repos)
+	if err != nil {
+		rlh.log.Error("marshaling response failed with error: ", err)
+		utils.HandleCustomErrors(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+func (rlh *RepoLinkHandler) GetUserRepoLinks(w http.ResponseWriter, r *http.Request) {
+	repos, err := rlh.service.GetUserRepoLinks(r)
+	if err != nil {
+		rlh.log.Error("getting repo links from db failed with error: ", err)
 		utils.HandleCustomErrors(w, err)
 		return
 	}

@@ -28,13 +28,13 @@ func NewGithubService(ghc search.GithubSearch, log common.Logger) *GithubService
 	}
 }
 
-func (gs *GithubService) GithubSearch(r *http.Request) ([]models.RepositoryModel, error) {
+func (gs *GithubService) GithubSearchRepos(r *http.Request) ([]models.RepositoryModel, error) {
 	searchParams, err := gs.validateBodyFromRequest(r)
 	if err != nil {
 		return nil, err
 	}
 
-	gs.log.Infof("%v", searchParams)
+	gs.log.Infof("Github search Params: %v", searchParams)
 
 	// Force max repo size of 50MB (TODO: Review)
 	if !strings.Contains(searchParams.Query, "size:<=50000") {
@@ -66,6 +66,70 @@ func (gs *GithubService) GithubSearch(r *http.Request) ([]models.RepositoryModel
 	}
 
 	return res, nil
+}
+
+func (gs *GithubService) GithubSearchReposForUser(r *http.Request) ([]models.RepositoryModel, error) {
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		return nil, errors.NewBadRequestError("missing required field: username")
+	}
+
+	gs.log.Infof("Github repo search for user : %v", username)
+
+	searchParams := &models.SearchParamsModel{
+		Query: fmt.Sprintf("user:%s size:<=50000", username), // Also limit to 50MB
+		Opts: github.SearchOptions{
+			Sort:  "updated",
+			Order: "desc",
+			ListOptions: github.ListOptions{
+				PerPage: 50,
+			},
+		},
+		StartPage:      0,
+		CurrentPage:    0,
+		PagesToProcess: 2, // At 50 per page, we only load at most 100 repos TODO: This breaks for users with more than 100 repos
+	}
+
+	gs.log.Infof("Running user repo search for params 'Query: %s', 'Params: %v' 'StartPage': %d, 'CurrentPage': %d, 'PagesToProcess': %d", searchParams.Query, searchParams.Opts, searchParams.StartPage, searchParams.CurrentPage, searchParams.PagesToProcess)
+
+	res, err := gs.ghs.FindRepositories(r.Context(), searchParams)
+	if err != nil {
+		return nil, errors.NewInternalError(fmt.Sprintf("error finding repositories: %v", err.Error()))
+	}
+
+	return res, nil
+}
+
+func (gs *GithubService) GithubSearchUsers(r *http.Request) ([]models.GithubUser, error) {
+
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		return nil, errors.NewBadRequestError("missing required field: username")
+	}
+
+	gs.log.Infof("Github user search for: %v", username)
+
+	res, err := gs.ghs.FindUsers(r.Context(), username)
+	if err != nil {
+		return nil, errors.NewInternalError(fmt.Sprintf("error finding user: %v", err.Error()))
+	}
+
+	var users []models.GithubUser
+
+	for _, user := range res {
+		users = append(users, models.GithubUser{
+			Id:        user.GetID(),
+			Login:     user.GetLogin(),
+			Url:       user.GetURL(),
+			AvatarUrl: user.GetAvatarURL(),
+		})
+	}
+
+	if len(users) == 0 {
+		return []models.GithubUser{}, nil
+	}
+
+	return users, nil
 }
 
 func (gs *GithubService) validateBodyFromRequest(r *http.Request) (*models.SearchParamsModel, error) {

@@ -30,3 +30,19 @@ func (rls *RepoLinkService) GetRepoLinks(r *http.Request) ([]*models.RepoWithLin
 
 	return repoLinks, nil
 }
+
+func (rls *RepoLinkService) GetUserRepoLinks(r *http.Request) ([]*models.RepoWithLinks, error) {
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		return nil, errors.NewBadRequestError("missing required field: username")
+	}
+
+	rls.log.Infof("Getting repo links for user: %s", username)
+
+	repoLinks, err := rls.r.GetRepositoryWithLinksForUser(username)
+	if err != nil {
+		return nil, errors.NewInternalError(fmt.Sprintf("error when getting repo links for user %v: %v", username, err.Error()))
+	}
+
+	return repoLinks, nil
+}

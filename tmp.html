@@ -1,0 +1,84 @@
+{hasPickedUser && repos.length > 0 ? (
+<Card>
+    <Backdrop sx={{ color: '#fff' , zIndex: (theme)=> theme.zIndex.drawer + 1,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: 2,
+        }}
+        open={isProcessingRepos}
+        >
+
+        <CircularProgress color="inherit" />
+
+    </Backdrop>
+
+    <RepoTableToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName}
+        saveSelectedRepos={handleProcessRepos} />
+
+    <Scrollbar>
+        <TableContainer sx={{ overflow: 'unset' }}>
+            <Table sx={{ minWidth: 800 }}>
+
+                <RepoTableHead order={order} orderBy={orderBy} rowCount={repos.length} numSelected={selected.length}
+                    onRequestSort={handleSort} onSelectAllClick={handleSelectAllClick} headLabel={[ { id: 'name' ,
+                    label: 'Repository Name' }, { id: 'author' , label: 'Author' }, { id: 'language' , label: 'Language'
+                    }, { id: 'stars' , label: 'Stars' , align: 'center' }, { id: 'forks' , label: 'Forks' ,
+                    align: 'center' }, { id: '' }, ]} />
+                <TableBody>
+                    {repos.length > 0 ? (
+                    <>
+                        {dataFiltered
+                        .slice(
+                        page * rowsPerPage,
+                        page * rowsPerPage + rowsPerPage
+                        )
+                        .map((row, index) => (
+                        <RepoTableRow key={index} name={row.name} author={row.author} language={row.language}
+                            ghUrl={row.ghUrl} stars={row.stars} forks={row.forks} avatarUrl={row.avatarUrl}
+                            lastCommit={row.lastCommit} selected={selected.some( (selectedRow)=> selectedRow === row
+                            )}
+                            handleClick={(event) =>
+                            handleClick(event, row, index)
+                            }
+                            />
+                            ))}
+
+                            <TableEmptyRows height={77} emptyRows={emptyRows( page, rowsPerPage, repos.length )} />
+                            {notFound &&
+                            <TableNoData query={filterName} />}
+                    </>
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={7} align="center">
+                            <Typography variant="subtitle1">
+                                No repositories found.
+                            </Typography>
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+
+            </Table>
+        </TableContainer>
+    </Scrollbar>
+
+    <TablePagination page={page} component="div" count={repos.length} rowsPerPage={rowsPerPage}
+        onPageChange={handleChangePage} rowsPerPageOptions={[5, 10, 25]}
+        onRowsPerPageChange={handleChangeRowsPerPage} />
+
+</Card>
+) : hasPickedUser ? (
+<Card sx={{ mt: 4, p: 3, textAlign: 'center' }}>
+    <Typography variant="h6" color="text.secondary">
+        No repositories found
+    </Typography>
+    <Typography variant="body2" sx={{ mt: 1 }}>
+        This user doesn't have any public repositories. Try selecting a different
+        user.
+    </Typography>
+</Card>
+) : null}

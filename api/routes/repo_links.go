@@ -28,5 +28,11 @@ func NewRepoLinkRoutes(router api.AppRouter, l common.Logger, h handlers.RepoLin
 		middleware.Chain(repoLinkHandler, mws...),
 	)
 
+	userRepoLinkHandler := http.HandlerFunc(routes.h.GetUserRepoLinks)
+	router.Get(
+		BASE_PATH+"/repoLinks-user",
+		middleware.Chain(userRepoLinkHandler, mws...),
+	)
+
 	return routes
 }

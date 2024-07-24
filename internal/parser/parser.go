@@ -97,7 +97,6 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 					err = p.linkRepo.CreateParserLink(&link)
 					if err != nil {
 						p.log.Errorf("[%s] Error saving repo link: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
-
 					}
 				}
 

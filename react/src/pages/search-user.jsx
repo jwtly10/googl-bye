@@ -1,17 +1,17 @@
 import { Helmet } from 'react-helmet-async';
 
-import { SearchView } from 'src/sections/search/view';
+import { SearchUserView } from 'src/sections/search-user/view';
 
 // ----------------------------------------------------------------------
 
-export default function SearchPage() {
+export default function SearchUserPage() {
     return (
         <>
             <Helmet>
-                <title> Search | GooGl-Bye </title>
+                <title> Search-User | GooGl-Bye </title>
             </Helmet>
 
-            <SearchView />
+            <SearchUserView />
         </>
     );
 }

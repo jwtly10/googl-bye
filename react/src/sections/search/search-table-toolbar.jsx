@@ -51,7 +51,7 @@ export default function RepoTableToolbar({
 
             {numSelected > 0 && (
                 <Button onClick={saveSelectedRepos} variant="contained" color="primary">
-                    Save Selected repos
+                    Save selected repos
                 </Button>
             )}
         </Toolbar>

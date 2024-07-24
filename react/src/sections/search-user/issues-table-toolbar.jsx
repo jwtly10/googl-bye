@@ -10,7 +10,7 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-export default function RepoTableToolbar({ numSelected, filterName, onFilterName }) {
+export default function IssueTableToolbar({ numSelected, filterName, onFilterName }) {
     return (
         <Toolbar
             sx={{
@@ -53,7 +53,7 @@ export default function RepoTableToolbar({ numSelected, filterName, onFilterName
     );
 }
 
-RepoTableToolbar.propTypes = {
+IssueTableToolbar.propTypes = {
     numSelected: PropTypes.number,
     filterName: PropTypes.string,
     onFilterName: PropTypes.func,

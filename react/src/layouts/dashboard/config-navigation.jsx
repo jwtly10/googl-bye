@@ -13,6 +13,11 @@ const navConfig = [
     //     icon: icon('ic_analytics'),
     // },
     {
+        title: 'Search User Repos',
+        path: '/search-user',
+        icon: icon('ic_user'),
+    },
+    {
         title: 'Search New Repos',
         path: '/search',
         icon: icon('ic_search'),

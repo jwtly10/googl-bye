@@ -12,6 +12,7 @@ type RepoCache struct {
 }
 
 func NewRepoCache(repoRepo repository.RepoRepository, log Logger) (*RepoCache, error) {
+	log.Infof("Loading repo cache")
 
 	cache := &RepoCache{}
 
