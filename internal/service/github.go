@@ -130,6 +130,7 @@ func (gs *GithubService) GithubSearchUsers(r *http.Request) ([]models.GithubUser
 			Login:     user.GetLogin(),
 			Url:       user.GetURL(),
 			AvatarUrl: user.GetAvatarURL(),
+			Name:      user.GetName(),
 		})
 	}
 

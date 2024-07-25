@@ -22,7 +22,7 @@ type GithubSearch struct {
 }
 
 func NewGithubSearch(config *common.Config, log common.Logger, searchRepo repository.SearchParamRepository, repoRepo repository.RepoRepository) *GithubSearch {
-	ghClient := common.NewGitHubClient(config.GHToken)
+	ghClient := common.NewGitHubClient(config.GHToken, log)
 
 	return &GithubSearch{
 		client:     ghClient,
@@ -40,6 +40,7 @@ func (ghs *GithubSearch) FindUsers(ctx context.Context, userName string) ([]*git
 		return nil, err
 	}
 	ghs.log.Infof("Found %d users from API", len(users))
+
 	return users, nil
 }
 
