@@ -72,7 +72,7 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 
 			go func() {
 				defer close(done)
-				repo.ParseStatus = "PROCESSING"
+				repo.State = "PROCESSING"
 				err = p.repoRepo.UpdateRepo(&repo)
 				if err != nil {
 					p.log.Errorf("[%s] Error updateing repo state : %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
@@ -81,6 +81,13 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 				links, err := p.repoParser.ParseRepository(repo)
 				if err != nil {
 					p.log.Errorf("[%s] Error parsing repo: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
+					// If this fails, we should set state failed
+					repo.State = "ERROR"
+					repo.ErrorMsg = err.Error()
+					err = p.repoRepo.UpdateRepo(&repo)
+					if err != nil {
+						p.log.Errorf("[%s] Error updating repo state: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
+					}
 				}
 
 				// Save any links
@@ -90,12 +97,11 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 					err = p.linkRepo.CreateParserLink(&link)
 					if err != nil {
 						p.log.Errorf("[%s] Error saving repo link: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
-
 					}
 				}
 
 				// Update states on success
-				repo.ParseStatus = "DONE"
+				repo.State = "COMPLETED"
 				err = p.repoRepo.UpdateRepo(&repo)
 				if err != nil {
 					p.log.Errorf("[%s] Error updating repo state: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
@@ -109,7 +115,7 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 			case <-timeoutCtx.Done():
 				if timeoutCtx.Err() == context.DeadlineExceeded {
 					p.log.Warnf("[%s] Processing timed out after 30 seconds", fmt.Sprintf("%s/%s", repo.Author, repo.Name))
-					repo.ParseStatus = "TIMEOUT"
+					repo.State = "TIMEOUT"
 					err := p.repoRepo.UpdateRepo(&repo)
 					if err != nil {
 						p.log.Errorf("[%s] Error updating repo state after timeout: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
@@ -144,7 +150,5 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 		if err != nil {
 			p.log.Errorf("[%s] Error saving parser state: %v", fmt.Sprintf("%s/%s", lastRepo.Author, lastRepo.Name), err)
 		}
-	} else {
-		p.log.Info("No last repo found during parsing. Will not update state.")
 	}
 }

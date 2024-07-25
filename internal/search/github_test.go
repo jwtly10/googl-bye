@@ -25,7 +25,11 @@ func TestFindRepositories(t *testing.T) {
 						Owner: &github.User{
 							Login: github.String("owner1"),
 						},
-						URL: github.String("https://api.github.com/repos/owner1/repo1"),
+						URL:             github.String("https://api.github.com/repos/owner1/repo1"),
+						Language:        github.String("Golang"),
+						StargazersCount: github.Int(30),
+						ForksCount:      github.Int(0),
+						PushedAt:        &github.Timestamp{Time: time.Now()},
 					},
 					{
 						Name: github.String("repo2"),
@@ -33,7 +37,11 @@ func TestFindRepositories(t *testing.T) {
 							Name:  github.String("Owner Two"),
 							Login: github.String("owner2"),
 						},
-						URL: github.String("https://api.github.com/repos/owner2/repo2"),
+						URL:             github.String("https://api.github.com/repos/owner2/repo2"),
+						Language:        github.String("Java"),
+						StargazersCount: github.Int(3921),
+						ForksCount:      github.Int(901),
+						PushedAt:        &github.Timestamp{Time: time.Now()},
 					},
 				},
 				&github.Response{NextPage: 0},
@@ -66,17 +74,16 @@ func TestFindRepositories(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer container.Terminate(context.Background())
+	log := common.NewLogger(false, zapcore.DebugLevel)
 
 	searchRepo := repository.NewSearchParamRepository(db)
 	repoRepo := repository.NewRepoRepository(db)
 
 	// Create a GithubSearch instance with the mock client
-	cache := make(map[string]bool)
 	gs := &GithubSearch{
 		client:     mockClient,
 		config:     &common.Config{},
-		log:        common.NewLogger(false, zapcore.DebugLevel),
-		repoCache:  &cache,
+		log:        log,
 		searchRepo: searchRepo,
 		repoRepo:   repoRepo,
 	}
@@ -102,6 +109,10 @@ func TestFindRepositories(t *testing.T) {
 	assert.Equal(t, "https://github.com/owner1/repo1", repos[0].GhUrl)
 	assert.Equal(t, "https://github.com/owner1/repo1.git", repos[0].CloneUrl)
 	assert.Equal(t, "https://api.github.com/repos/owner1/repo1", repos[0].ApiUrl)
+	assert.Equal(t, "Golang", repos[0].Language)
+	assert.Equal(t, 30, repos[0].Stars)
+	assert.Equal(t, 0, repos[0].Forks)
+	assert.NotNil(t, repos[0].LastPush)
 
 	// Assert correct parsing of second repo
 	assert.Equal(t, "repo2", repos[1].Name)
@@ -109,106 +120,8 @@ func TestFindRepositories(t *testing.T) {
 	assert.Equal(t, "https://github.com/owner2/repo2", repos[1].GhUrl)
 	assert.Equal(t, "https://github.com/owner2/repo2.git", repos[1].CloneUrl)
 	assert.Equal(t, "https://api.github.com/repos/owner2/repo2", repos[1].ApiUrl)
-}
-
-func TestFindRepositoriesCacheHit(t *testing.T) {
-	// Create a mock client
-	mockClient := &mock.MockGithubClient{
-		MockSearchRepositories: func(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error) {
-			return []*github.Repository{
-					{
-						Name: github.String("repo1"),
-						Owner: &github.User{
-							Login: github.String("owner1"),
-						},
-						URL: github.String("https://api.github.com/repos/owner1/repo1"),
-					},
-					{
-						Name: github.String("repo2"),
-						Owner: &github.User{
-							Name:  github.String("Owner Two"),
-							Login: github.String("owner2"),
-						},
-						URL: github.String("https://api.github.com/repos/owner2/repo2"),
-					},
-				},
-				&github.Response{NextPage: 0},
-				nil
-		},
-		MockCheckRateLimit: func(ctx context.Context) (*github.RateLimits, error) {
-			return &github.RateLimits{
-				Core: &github.Rate{
-					Limit:     10,
-					Remaining: 10,
-					Reset: github.Timestamp{
-						Time: time.Now(),
-					},
-				},
-				Search: &github.Rate{
-					Limit:     10,
-					Remaining: 10,
-					Reset: github.Timestamp{
-						Time: time.Now(),
-					},
-				},
-			}, nil
-		},
-	}
-
-	container, db, err := test.NewTestDatabaseWithContainer(test.TestDatabaseConfiguration{
-		RootRelativePath: "../../",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer container.Terminate(context.Background())
-
-	searchRepo := repository.NewSearchParamRepository(db)
-	repoRepo := repository.NewRepoRepository(db)
-
-	// Create a GithubSearch instance with the mock client
-	cache := make(map[string]bool)
-	// Adding one of the repos to cache
-	cache["owner1/repo1"] = true
-	gs := &GithubSearch{
-		client:     mockClient,
-		config:     &common.Config{},
-		log:        common.NewLogger(false, zapcore.DebugLevel),
-		repoCache:  &cache,
-		searchRepo: searchRepo,
-		repoRepo:   repoRepo,
-	}
-
-	// Call FindRepositories
-	query := &models.SearchParamsModel{
-		Name:  "unit_test_2",
-		Query: "stars:>10000",
-		Opts: github.SearchOptions{
-			Sort:  "stars",
-			Order: "desc",
-			ListOptions: github.ListOptions{
-				PerPage: 2,
-				Page:    0,
-			},
-		},
-		PagesToProcess: 1,
-		CurrentPage:    1,
-		StartPage:      1,
-	}
-
-	repos, err := gs.FindRepositories(context.Background(), query)
-
-	// Assert no error
-	assert.NoError(t, err)
-
-	// Assert correct number of repos
-	// Note only 1 this time as there was a cache hit.
-	assert.Len(t, repos, 1)
-
-	// Assert correct parsing of second repo
-	assert.Equal(t, "repo2", repos[0].Name)
-	assert.Equal(t, "owner2", repos[0].Author)
-	assert.Equal(t, "https://github.com/owner2/repo2", repos[0].GhUrl)
-	assert.Equal(t, "https://github.com/owner2/repo2.git", repos[0].CloneUrl)
-	assert.Equal(t, "https://api.github.com/repos/owner2/repo2", repos[0].ApiUrl)
+	assert.Equal(t, "Java", repos[1].Language)
+	assert.Equal(t, 3921, repos[1].Stars)
+	assert.Equal(t, 901, repos[1].Forks)
+	assert.NotNil(t, repos[1].LastPush)
 }

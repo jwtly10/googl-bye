@@ -35,14 +35,15 @@ func (r *sqlParserLinkRepository) handleError(err error) error {
 // CreateParserLink inserts a new link into the database
 func (r *sqlParserLinkRepository) CreateParserLink(link *models.ParserLinksModel) error {
 	link.BeforeCreate()
-	query := `INSERT INTO public.parser_links_tb (repo_id, url, expanded_url, file, line_number, path)
-        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	query := `INSERT INTO public.parser_links_tb (repo_id, url, expanded_url, file, line_number, github_url, path)
+        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 	err := r.database.QueryRow(query,
 		link.RepoId,
 		link.Url,
 		link.ExpandedUrl,
 		link.File,
 		link.LineNumber,
+		link.GithubUrl,
 		link.Path,
 	).Scan(&link.ID)
 	if err != nil {

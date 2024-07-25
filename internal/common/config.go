@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-	DBHost     string
-	DBPort     int
-	DBUser     string
-	DBPassword string
-	DBName     string
-	GHToken    string
+	DBHost         string
+	DBPort         int
+	DBUser         string
+	DBPassword     string
+	DBName         string
+	GHToken        string
+	ParserInterval int
 }
 
 func LoadConfig() (*Config, error) {
@@ -27,12 +28,18 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
+	parserInterval, err := strconv.Atoi(os.Getenv("PARSER_INTERVAL"))
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
-		DBHost:     os.Getenv("DB_HOST"),
-		DBPort:     port,
-		DBUser:     os.Getenv("DB_USER"),
-		DBPassword: os.Getenv("DB_PASSWORD"),
-		DBName:     os.Getenv("DB_NAME"),
-		GHToken:    os.Getenv("GH_TOKEN"),
+		DBHost:         os.Getenv("DB_HOST"),
+		DBPort:         port,
+		DBUser:         os.Getenv("DB_USER"),
+		DBPassword:     os.Getenv("DB_PASSWORD"),
+		DBName:         os.Getenv("DB_NAME"),
+		GHToken:        os.Getenv("GH_TOKEN"),
+		ParserInterval: parserInterval,
 	}, nil
 }

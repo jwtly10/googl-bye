@@ -35,5 +35,18 @@ cd googl-bye
 ```sh
 # TODO
 # docker compose up
-# Inits a postgres instance, and runs the go application
+# Inits a postgres instance, and runs the go application (backend & frontend)
+```
+
+### Run without docker in dev:
+
+1. Start the frontend nodemon service
+```sh
+cd react 
+nodemon
+```
+2. Run the Golang application
+```sh
+cd .. #(if still in react dir)
+go run cmd/server/main.go
 ```

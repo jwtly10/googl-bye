@@ -25,10 +25,11 @@ func TestGitCmdLineClone(t *testing.T) {
 	destination := filepath.Join(tmpDir, "repo")
 
 	// Execute
-	err = gitCmdLine.Clone(repoURL, destination)
+	branch, err := gitCmdLine.Clone(repoURL, destination)
 
 	// Assert
 	assert.NoError(t, err)
+	assert.Equal(t, "main", branch)
 
 	// Check if README.md exists
 	readmePath := filepath.Join(destination, "README.md")
