@@ -10,7 +10,12 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-export default function IssueTableToolbar({ numSelected, filterName, onFilterName }) {
+export default function IssueTableToolbar({
+    numSelected,
+    filterName,
+    onFilterName,
+    refreshIssues,
+}) {
     return (
         <Toolbar
             sx={{
@@ -44,11 +49,9 @@ export default function IssueTableToolbar({ numSelected, filterName, onFilterNam
                 />
             )}
 
-            {numSelected > 0 && (
-                <Button variant="contained" color="primary">
-                    Save selected repos
-                </Button>
-            )}
+            <Button onClick={refreshIssues} variant="contained" color="primary">
+                Refresh Results
+            </Button>
         </Toolbar>
     );
 }

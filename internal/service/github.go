@@ -65,6 +65,10 @@ func (gs *GithubService) GithubSearchRepos(r *http.Request) ([]models.Repository
 		return nil, errors.NewInternalError(fmt.Sprintf("error finding repositories: %v", err.Error()))
 	}
 
+	if len(res) == 0 {
+		return []models.RepositoryModel{}, nil
+	}
+
 	return res, nil
 }
 
@@ -95,6 +99,10 @@ func (gs *GithubService) GithubSearchReposForUser(r *http.Request) ([]models.Rep
 	res, err := gs.ghs.FindRepositories(r.Context(), searchParams)
 	if err != nil {
 		return nil, errors.NewInternalError(fmt.Sprintf("error finding repositories: %v", err.Error()))
+	}
+
+	if len(res) == 0 {
+		return []models.RepositoryModel{}, nil
 	}
 
 	return res, nil

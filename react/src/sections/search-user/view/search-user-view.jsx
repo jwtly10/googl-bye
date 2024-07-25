@@ -9,9 +9,7 @@ import {
     TableCell,
     TableContainer,
     TablePagination,
-    Backdrop,
     Typography,
-    CircularProgress,
     Card,
 } from '@mui/material';
 
@@ -22,10 +20,6 @@ import ErrorToast from 'src/components/toast/errorToast';
 import SuccessToast from 'src/components/toast/successToast';
 
 import TableNoData from '../table-no-data';
-
-import RepoTableRow from '../search-table-row';
-import RepoTableHead from '../search-table-head';
-import RepoTableToolbar from '../search-table-toolbar';
 
 import IssueTableRow from '../issues-table-row';
 import IssueTableHead from '../issues-table-head';
@@ -46,31 +40,35 @@ import UserGrid from 'src/components/search-user/searchUserGrid';
 
 export default function SearchUserPage() {
     const [page, setPage] = useState(0);
-    const [order, setOrder] = useState('asc');
-    const [selected, setSelected] = useState([]);
-    const [orderBy, setOrderBy] = useState('name');
+    const [order, setOrder] = useState('desc');
+    const [orderBy, setOrderBy] = useState('links');
     const [filterName, setFilterName] = useState('');
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [rowsPerPage, setRowsPerPage] = useState(25);
 
     const [errorToast, setErrorToast] = useState({ open: false, message: '' });
     const [successToast, setSuccessToast] = useState({ open: false, message: '' });
 
-    const [repos, setRepos] = useState([]);
     const [issues, setIssues] = useState([]);
     const [users, setUsers] = useState([]);
     const [username, setUsername] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
 
     // State mangagement for user flow
-    const [isSearching, setIsSearching] = useState(false);
-    const [isFindingRepos, setIsFindingRepos] = useState(false);
-    const [isProcessingRepos, setIsProcessingRepos] = useState(false);
+    const [isSearchingForUser, setIsSearchingForUser] = useState(false);
+    const [isSavingRepos, setIsSavingRepos] = useState(false);
+    const [showUsersGrid, setShowUsersGrid] = useState(false);
+    const [showRepoIssues, setShowRepoIssues] = useState(false);
 
-    const [hasSearched, setHasSearched] = useState(false);
-    const [hasPickedUser, setHasPickedUser] = useState(false);
-    const [hasProcessedRepos, setHasProcessedRepos] = useState(false);
-
-    useEffect(() => { }, []);
+    useEffect(() => {
+        // On componenet mount, reload user results data, if there
+        try {
+            loadResults();
+        } catch (e) {
+            // Catch any unexpected errors (as we cant control whats in local storage)
+            console.error('Error loading user results', e);
+            setErrorToast({ open: true, message: e });
+        }
+    }, []);
 
     const handleSort = (event, id) => {
         const isAsc = orderBy === id && order === 'asc';
@@ -78,39 +76,6 @@ export default function SearchUserPage() {
             setOrder(isAsc ? 'desc' : 'asc');
             setOrderBy(id);
         }
-    };
-
-    const handleSelectAllClick = (event) => {
-        if (event.target.checked) {
-            const newSelecteds = repos.map((n) => n);
-            setSelected(newSelecteds);
-            return;
-        }
-        setSelected([]);
-    };
-
-    const handleClick = (event, row, index) => {
-        const selectedIndex = selected.findIndex((item) => item === row);
-        let newSelected = [];
-
-        if (selectedIndex === -1) {
-            // If the row is not in the selected array, add it
-            newSelected = [...selected, row];
-        } else if (selectedIndex === 0) {
-            // If it's the first item, remove it
-            newSelected = selected.slice(1);
-        } else if (selectedIndex === selected.length - 1) {
-            // If it's the last item, remove it
-            newSelected = selected.slice(0, -1);
-        } else if (selectedIndex > 0) {
-            // If it's in the middle, remove it
-            newSelected = [
-                ...selected.slice(0, selectedIndex),
-                ...selected.slice(selectedIndex + 1),
-            ];
-        }
-
-        setSelected(newSelected);
     };
 
     const handleChangePage = (event, newPage) => {
@@ -127,12 +92,6 @@ export default function SearchUserPage() {
         setFilterName(event.target.value);
     };
 
-    const dataFiltered = applyFilter({
-        inputData: repos,
-        comparator: getComparator(order, orderBy),
-        filterName,
-    });
-
     const issuesFiltered = applyFilter({
         inputData: issues,
         comparator: getComparator(order, orderBy),
@@ -148,13 +107,13 @@ export default function SearchUserPage() {
     };
 
     const handleSearch = async () => {
-        if (isSearching || isFindingRepos) {
+        if (isSearchingForUser || isSavingRepos) {
             return;
         }
-        setIsSearching(true);
-        setHasSearched(false);
-        setHasPickedUser(false);
-        setHasProcessedRepos(false);
+
+        setIsSearchingForUser(true);
+        setShowUsersGrid(false);
+        setShowRepoIssues(false);
         console.log(`Starting github search for ${username}`);
 
         try {
@@ -164,38 +123,39 @@ export default function SearchUserPage() {
             } else {
                 setUsers(res);
             }
-
-            setIsSearching(false);
-            setHasSearched(true);
         } catch (e) {
+            console.error('Error searching for users', e);
             setErrorToast({ open: true, message: e.response.data.message });
+            setIsSearchingForUser(false);
+            setShowUsersGrid(false);
+            return;
         }
-        setIsSearching(false);
+
+        // Search has completed
+        setIsSearchingForUser(false);
+        setShowUsersGrid(true);
     };
 
     const handleUserSelect = async (login) => {
         setSelectedUser(login);
         console.log(`Selected user: ${login}..getting repos`);
-        setIsFindingRepos(true);
+        setIsSavingRepos(true);
+
+        clearResults();
 
         //  Find Repos for user
         var repositories;
         try {
             const res = await searchGithubUsersRepo(login);
-            if (res === null) {
-                setRepos([]);
-            } else {
-                setRepos(res);
-                repositories = res;
-            }
-            // setIsFindingRepos(false);
-            setHasSearched(false);
-            setHasPickedUser(true);
+            repositories = res;
         } catch (e) {
+            console.error('Error searching for repos', e);
             setErrorToast({ open: true, message: e.response.data.message });
-            setIsFindingRepos(false);
-            setHasSearched(false);
-            setHasPickedUser(true);
+
+            setShowUsersGrid(true);
+            setIsSavingRepos(false);
+            setShowRepoIssues(false);
+            return;
         }
 
         // Save repos to DB
@@ -203,8 +163,13 @@ export default function SearchUserPage() {
             await saveRepos(repositories);
             console.log(repositories.length, 'repos saved to db');
         } catch (e) {
-            console.log(e);
+            console.log('Error saving repos to db', e);
             setErrorToast({ open: true, message: e.response.data.message });
+
+            setShowUsersGrid(true);
+            setIsSavingRepos(false);
+            setShowRepoIssues(false);
+            return;
         }
 
         // Pull states of repos
@@ -217,46 +182,77 @@ export default function SearchUserPage() {
             }
 
             console.log('Search completed!');
-            setHasProcessedRepos(true);
-            setHasSearched(false);
-            setHasPickedUser(false);
         } catch (e) {
+            console.error('Error searching for repo links', e);
             setErrorToast({ open: true, message: e.response.data.message });
-            setHasProcessedRepos(true);
-            setHasSearched(false);
-            setHasPickedUser(false);
+
+            setShowUsersGrid(true);
+            setIsSavingRepos(false);
+            setShowRepoIssues(false);
+            return;
         }
+
+        // Update stats
+        setShowUsersGrid(false);
+        setIsSavingRepos(false);
+        setShowRepoIssues(true);
+
         setSuccessToast({
             open: true,
-            message: `Found ${repositories.length} repo. Please wait a few seconds to see results.`,
+            message: `Found ${repositories.length} repo(s). Please refresh after a few seconds to see results.`,
         });
+
+        // At this point we should snapshot data and save to localStorage for an easy lookup/refresh
+        saveResults(login);
     };
 
-    // The save button
-    const handleProcessRepos = async () => {
-        // if (isProcessingRepos | isFindingRepos) {
-        //     return;
-        // }
-        setIsProcessingRepos(true);
-        console.log('Saving & Processing repos');
-        console.log('Saving repos to db');
-        console.log('Repos to save:', repos);
+    const saveResults = (user) => {
+        localStorage.setItem('selectedUser', user);
+    };
 
-        // Step 1. We save the repos to DB.
-        try {
-            await saveRepos(repos);
-            console.log(repos.length, 'repos saved to db');
-            // setSuccessToast({
-            //     open: true,
-            //     message: `${selected.length} repo(s) queued for processing. Please wait a few seconds.`,
-            // });
-        } catch (e) {
-            console.log(e);
-            setErrorToast({ open: true, message: e.response.data.message });
+    const clearResults = () => {
+        localStorage.removeItem('selectedUser');
+        setSelectedUser(null);
+    };
+
+    const loadResults = async () => {
+        const selectedUser = localStorage.getItem('selectedUser');
+        if (selectedUser) {
+            setSelectedUser(selectedUser);
+            try {
+                const res = await searchRepoLinksForUser(selectedUser);
+                if (res === null) {
+                    setIssues([]);
+                } else {
+                    setIssues(res);
+                }
+
+                console.log('Search completed!');
+            } catch (e) {
+                console.error('Error searching for repo links', e);
+                setErrorToast({ open: true, message: e.response.data.message });
+
+                setShowUsersGrid(true);
+                setIsSavingRepos(false);
+                setShowRepoIssues(false);
+                return;
+            }
+
+            setShowUsersGrid(false);
+            setIsSavingRepos(false);
+            setShowRepoIssues(true);
         }
-        setSelected([]);
+    };
 
-        // Step 2. We pull all repo links for user (eventually they will be populated by the parser job)
+    const refreshIssues = async () => {
+        if (isSavingRepos && isSearchingForUser) {
+            return;
+        }
+
+        console.log('Refreshing issues');
+        // console.log('Selected user:', selectedUser);
+        const selectedUser = localStorage.getItem('selectedUser');
+
         try {
             const res = await searchRepoLinksForUser(selectedUser);
             if (res === null) {
@@ -266,22 +262,24 @@ export default function SearchUserPage() {
             }
 
             console.log('Search completed!');
-            setHasProcessedRepos(true);
-            setHasSearched(false);
-            setHasPickedUser(false);
         } catch (e) {
+            console.error('Error searching for repo links', e);
             setErrorToast({ open: true, message: e.response.data.message });
-            setHasProcessedRepos(true);
-            setHasSearched(false);
-            setHasPickedUser(false);
+
+            setShowUsersGrid(true);
+            setIsSavingRepos(false);
+            setShowRepoIssues(false);
+            return;
         }
+
+        setShowRepoIssues(true);
         setSuccessToast({
             open: true,
-            message: `${selected.length} repo(s) queued for processing. Please wait a few seconds.`,
+            message: `Refreshed ${issues.length} repo(s).`,
         });
     };
 
-    const notFound = !dataFiltered.length && !!filterName;
+    const notFound = !issuesFiltered.length && !!filterName;
 
     return (
         <Container>
@@ -298,16 +296,16 @@ export default function SearchUserPage() {
                 setUsername={setUsername}
                 handleSearch={handleSearch}
                 username={username}
-                isSearching={isSearching}
+                isSearching={isSearchingForUser}
             />
 
-            {hasSearched && users.length > 0 ? (
+            {showUsersGrid && users.length > 0 ? (
                 <UserGrid
-                    isFindingRepos={isFindingRepos}
+                    isFindingRepos={isSavingRepos}
                     users={users}
                     onUserSelect={handleUserSelect}
                 />
-            ) : hasSearched ? (
+            ) : showUsersGrid ? (
                 <Card sx={{ mt: 4, p: 3, textAlign: 'center' }}>
                     <Typography variant="h6" color="text.secondary">
                         No users found
@@ -319,12 +317,13 @@ export default function SearchUserPage() {
                 </Card>
             ) : null}
 
-            {hasProcessedRepos && (
+            {showRepoIssues && (
                 <Card>
                     <IssueTableToolbar
-                        numSelected={selected.length}
+                        numSelected={0}
                         filterName={filterName}
                         onFilterName={handleFilterByName}
+                        refreshIssues={refreshIssues}
                     />
 
                     <Scrollbar>
@@ -334,7 +333,7 @@ export default function SearchUserPage() {
                                     order={order}
                                     orderBy={orderBy}
                                     rowCount={issues.length}
-                                    numSelected={selected.length}
+                                    numSelected={0}
                                     onRequestSort={handleSort}
                                     headLabel={[
                                         { id: 'name', label: 'Repository Name' },
@@ -369,7 +368,7 @@ export default function SearchUserPage() {
                                                         lastCommit={row.lastCommit}
                                                         issues={row.links}
                                                         errorMsg={row.errorMsg}
-                                                        selected={selected.indexOf(row.name) !== -1}
+                                                        selected={0}
                                                     />
                                                 ))}
                                             <TableEmptyRows
@@ -384,10 +383,9 @@ export default function SearchUserPage() {
                                         </>
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center">
+                                            <TableCell colSpan={8} align="center">
                                                 <Typography variant="subtitle1">
-                                                    Nice! No goo.gl links found in repos for user{' '}
-                                                    {selectedUser}.
+                                                    No repos found for user {selectedUser}.
                                                 </Typography>
                                             </TableCell>
                                         </TableRow>
@@ -399,10 +397,10 @@ export default function SearchUserPage() {
                     <TablePagination
                         page={page}
                         component="div"
-                        count={repos.length}
+                        count={issues.length}
                         rowsPerPage={rowsPerPage}
                         onPageChange={handleChangePage}
-                        rowsPerPageOptions={[5, 10, 25]}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                     />
                 </Card>
