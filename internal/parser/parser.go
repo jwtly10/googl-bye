@@ -88,6 +88,10 @@ func (p *Parser) StartParser(ctx context.Context, limit int) {
 					if err != nil {
 						p.log.Errorf("[%s] Error updating repo state: %v", fmt.Sprintf("%s/%s", repo.Author, repo.Name), err)
 					}
+
+					resultChan <- repo
+
+					return
 				}
 
 				// Save any links

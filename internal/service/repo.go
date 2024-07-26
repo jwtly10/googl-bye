@@ -35,8 +35,6 @@ func (rs *RepoService) SaveRepo(r *http.Request) error {
 	}
 
 	var cacheHits int
-	rs.log.Debugf("%v", reposFromReq)
-
 	var reposToSave []*models.RepositoryModel
 
 	// For each repo. Check if cache exists for it
