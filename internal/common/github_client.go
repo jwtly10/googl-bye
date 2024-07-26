@@ -13,6 +13,7 @@ type GithubClientI interface {
 	SearchRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error)
 	SearchForUser(ctx context.Context, username string) ([]*github.User, *github.Response, error)
 	CheckRateLimit(ctx context.Context) (*github.RateLimits, error)
+	CreateIssue(ctx context.Context, owner, repo string, issue *github.IssueRequest) (*github.Issue, *github.Response, error)
 }
 
 type GithubClient struct {
@@ -28,6 +29,15 @@ func NewGitHubClient(token string, log Logger) *GithubClient {
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
 	return &GithubClient{client: client, log: log}
+}
+
+func (gc *GithubClient) CreateIssue(ctx context.Context, owner, repo string, issue *github.IssueRequest) (*github.Issue, *github.Response, error) {
+	result, response, err := gc.client.Issues.Create(ctx, owner, repo, issue)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error creating issue: %v", err)
+	}
+
+	return result, response, nil
 }
 
 func (gc *GithubClient) SearchRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error) {

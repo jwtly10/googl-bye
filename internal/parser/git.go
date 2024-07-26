@@ -26,15 +26,16 @@ func (g *GitCmdLine) Clone(url, destination string) (string, error) {
 	// Clone the repository
 	g.log.Infof("Cloning repo '%s' into '%s'", url, destination)
 	cloneCmd := exec.Command("git", "clone", "--depth", "1", url, destination)
-	if err := cloneCmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to clone repository: %w", err)
-	}
+	output, err := cloneCmd.CombinedOutput()
+    if err != nil {
+        return "", fmt.Errorf("failed to clone repository: %w\nOutput: %s", err, string(output))
+    }
 
 	// Get the current branch
 	branchCmd := exec.Command("git", "-C", destination, "rev-parse", "--abbrev-ref", "HEAD")
-	output, err := branchCmd.Output()
+	output, err = branchCmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to get current branch: %w", err)
+		return "", fmt.Errorf("failed to get current branch: %w\nOutput: %s", err, string(output))
 	}
 
 	// Trim any whitespace from the branch name

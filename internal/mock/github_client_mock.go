@@ -2,6 +2,7 @@ package mock
 
 import (
 	"context"
+
 	"github.com/google/go-github/v39/github"
 )
 
@@ -9,6 +10,7 @@ type MockGithubClient struct {
 	MockSearchRepositories func(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error)
 	MockCheckRateLimit     func(ctx context.Context) (*github.RateLimits, error)
 	MockSearchForUser      func(ctx context.Context, username string) ([]*github.User, *github.Response, error)
+	MockCreateIssue func(ctx context.Context, owner, repo string, issue *github.IssueRequest) (*github.Issue, *github.Response, error)
 }
 
 func (m *MockGithubClient) SearchRepositories(ctx context.Context, query string, opts *github.SearchOptions) ([]*github.Repository, *github.Response, error) {
@@ -21,4 +23,8 @@ func (m *MockGithubClient) CheckRateLimit(ctx context.Context) (*github.RateLimi
 
 func (m *MockGithubClient) SearchForUser(ctx context.Context, username string) ([]*github.User, *github.Response, error) {
 	return m.MockSearchForUser(ctx, username)
+}
+
+func (m *MockGithubClient) CreateIssue(ctx context.Context, owner, repo string, issue *github.IssueRequest) (*github.Issue, *github.Response, error) {
+	return m.MockCreateIssue(ctx, owner, repo, issue)
 }

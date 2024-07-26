@@ -33,6 +33,18 @@ func NewGithubSearch(config *common.Config, log common.Logger, searchRepo reposi
 	}
 }
 
+func (ghs *GithubSearch) CreateIssueFromRepo(ctx context.Context, repo *models.RepoWithLinks) error {
+	issue := ghs.createIssueTemplate(repo)
+
+	_, _, err := ghs.client.CreateIssue(ctx, repo.Author, repo.Name, issue)
+	if err != nil {
+		ghs.log.Errorf("Error creating issue: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 func (ghs *GithubSearch) FindUsers(ctx context.Context, userName string) ([]*github.User, error) {
 	users, _, err := ghs.client.SearchForUser(ctx, userName)
 	if err != nil {
@@ -94,6 +106,42 @@ func (ghs *GithubSearch) FindRepositories(ctx context.Context, params *models.Se
 
 	ghs.log.Infof("Found %d repos total", len(allRepos))
 	return allRepos, nil
+}
+
+func (gs *GithubSearch) createIssueTemplate(repo *models.RepoWithLinks) *github.IssueRequest {
+	title := "Replace goo.gl links in repository"
+
+	body := `## Goo.gl Link Replacement Required
+
+Google is sunsetting the goo.gl URL shortener service. This repository contains goo.gl links that need to be replaced to ensure continued functionality.
+
+### Why this is important
+[https://developers.googleblog.com/en/google-url-shortener-links-will-no-longer-be-available/]
+
+### Links found in this repository:
+
+| File | Line | goo.gl Link | GitHub URL |
+|------|------|-------------|------------|
+`
+
+	for _, link := range repo.Links {
+		body += fmt.Sprintf("| `%s` | %d | %s | [View in GitHub](%s) |\n",
+			link.File, link.LineNumber, link.Url, link.GithubUrl)
+	}
+
+	body += `
+### Action required
+Please replace these goo.gl links with direct URLs or an alternative URL shortener service.
+
+### Additional Information
+- Total links found: ` + fmt.Sprintf("%d", len(repo.Links)) + `
+- Repository: ` + repo.Name + `
+- Last scanned: ` + time.Now().Format(time.RFC3339)
+
+	return &github.IssueRequest{
+		Title: &title,
+		Body:  &body,
+	}
 }
 
 func (ghs *GithubSearch) parseRepo(repo *github.Repository) (models.RepositoryModel, error) {

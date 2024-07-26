@@ -6,26 +6,53 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v39/github"
 	"github.com/jwtly10/googl-bye/internal/common"
 	"github.com/jwtly10/googl-bye/internal/errors"
 	"github.com/jwtly10/googl-bye/internal/models"
+	"github.com/jwtly10/googl-bye/internal/repository"
 	"github.com/jwtly10/googl-bye/internal/search"
 	"github.com/jwtly10/googl-bye/internal/utils"
 )
 
 type GithubService struct {
-	log common.Logger
-	ghs search.GithubSearch
+	log      common.Logger
+	ghs      search.GithubSearch
+	repoRepo repository.RepoRepository
 }
 
-func NewGithubService(ghc search.GithubSearch, log common.Logger) *GithubService {
+func NewGithubService(ghc search.GithubSearch, r repository.RepoRepository, log common.Logger) *GithubService {
 	return &GithubService{
-		log: log,
-		ghs: ghc,
+		log:      log,
+		ghs:      ghc,
+		repoRepo: r,
 	}
+}
+
+func (gs *GithubService) GithubCreateIssue(r *http.Request) (string, error) {
+	repoIdFromReq := r.URL.Query().Get("repoId")
+	if repoIdFromReq == "" {
+		return "", errors.NewBadRequestError("missing required field: repoId")
+	}
+
+	repoId, err := strconv.Atoi(repoIdFromReq)
+	if err != nil {
+		return "", errors.NewBadRequestError(fmt.Sprintf("invalid value for field repoId: expected int got '%v'", repoId))
+	}
+
+	gs.log.Infof("Creating issue for repo: %s", repoId)
+
+	repoDetails, err := gs.repoRepo.GetRepoByID(repoId)
+	if err != nil {
+		return "", errors.NewInternalError(fmt.Sprintf("error getting repo from ID: %v", err))
+	}
+
+	err = gs.ghs.CreateIssueFromRepo(r.Context(), repoDetails)
+
+	return "", nil
 }
 
 func (gs *GithubService) GithubSearchRepos(r *http.Request) ([]models.RepositoryModel, error) {
