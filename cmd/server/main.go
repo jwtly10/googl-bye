@@ -29,7 +29,7 @@ func main() {
 	// Setup config
 	config, err := common.LoadConfig()
 	if err != nil {
-		log.Fatal("Failed to load config")
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	// Setup logger

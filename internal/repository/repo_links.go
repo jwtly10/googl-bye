@@ -25,9 +25,9 @@ func (r *RepoLinkRepository) GetRepositoryWithLinks() ([]*models.RepoWithLinks, 
             l.id, l.url, l.expanded_url, l.file, l.line_number, l.github_url,
             l.path, l.created_at, l.updated_at
         FROM 
-            repository_tb r
+            public.repository_tb r
         LEFT JOIN 
-            parser_links_tb l ON r.id = l.repo_id
+            public.parser_links_tb l ON r.id = l.repo_id
         WHERE 
             (r.state = 'COMPLETED' OR r.state = 'ERROR')
             AND (r.state = 'ERROR' OR l.id IS NOT NULL)
@@ -91,9 +91,9 @@ func (r *RepoLinkRepository) GetRepositoryWithLinksForUser(author string) ([]*mo
             l.id, l.url, l.expanded_url, l.file, l.line_number, l.github_url,
             l.path, l.created_at, l.updated_at
         FROM 
-            repository_tb r
+            public.repository_tb r
         LEFT JOIN 
-            parser_links_tb l ON r.id = l.repo_id
+            public.parser_links_tb l ON r.id = l.repo_id
         WHERE 
             r.author = $1
         ORDER BY 

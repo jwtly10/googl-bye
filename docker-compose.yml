@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+  googl-bye-app:
+    container_name: googl-bye-app
+    command: ["./wait-for-it.sh", "googl-bye-db", "./main"] # wait for the database to be ready before starting the app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - googl-bye-network
+    environment:
+      - DB_HOST=googl-bye-db
+      - DB_PORT=5432
+      - DB_NAME=googl-bye-db
+      - DB_USER=postgres
+      - DB_PASSWORD=dev
+      - DB_SSL_MODE=disable
+    depends_on:
+      - googl-bye-db
+
+  googl-bye-db:
+    container_name: googl-bye-db
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=googl-bye-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    networks:
+      - googl-bye-network
+
+  pgadmin:
+    container_name: googl-bye-pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=adminpassword
+    ports:
+      - "5050:80"
+    depends_on:
+      - googl-bye-db
+    networks:
+      - googl-bye-network
+
+networks:
+  googl-bye-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
