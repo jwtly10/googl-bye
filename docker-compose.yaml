@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+    
+  googl-bye:
+    container_name: googl-bye
+    build: .
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DB_NAME=googl-bye-db
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_SSL_MODE=disable
+    volumes:
+      - .:/app
+    networks:
+      - googl-bye-network
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    env_file:
+      - ./db/db.env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - googl-bye-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    depends_on:
+      - postgres
+    container_name: pgadmin
+    restart: always
+    ports:
+      - 8888:80
+    env_file:
+      - ./db/db.env
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - googl-bye-network
+    configs:
+      - source: servers.json
+        target: /pgadmin4/servers.json
+
+configs:
+  servers.json:
+    content: |
+      {"Servers": {"1": {
+        "Group": "Servers",
+        "Name": "${DB_NAME}",
+        "Host": "postgres",
+        "Port": ${DB_PORT},
+        "MaintenanceDB": "googl-bye-db",
+        "Username": "${DB_USER}",
+        "SSLMode": "${DB_SSL_MODE}"
+      }}}
+
+volumes:
+  db_data:
+  pgadmin_data:
+    driver: local
+
+networks:
+  googl-bye-network:
+    driver: bridge
