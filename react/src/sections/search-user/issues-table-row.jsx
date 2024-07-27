@@ -35,6 +35,7 @@ export default function IssueTableRow({
     state,
     errorMsg,
     issues,
+    handleCreateIssue,
 }) {
     const [open, setOpen] = useState(null);
     const [expandOpen, setExpandOpen] = useState(false);
@@ -56,6 +57,11 @@ export default function IssueTableRow({
         wordWrap: 'break-word',
         overflowWrap: 'break-word',
     });
+
+    const handleCreatingIssue = () => {
+        setOpen(null);
+        handleCreateIssue();
+    };
 
     return (
         <>
@@ -207,7 +213,7 @@ export default function IssueTableRow({
                     sx: { width: 170 },
                 }}
             >
-                <MenuItem onClick={handleCloseMenu} sx={{ mr: 0 }}>
+                <MenuItem onClick={handleCreatingIssue} sx={{ mr: 0 }}>
                     <Iconify icon="mdi:github" width={20} height={20} sx={{ mr: 1 }} />
                     Create Issue
                 </MenuItem>

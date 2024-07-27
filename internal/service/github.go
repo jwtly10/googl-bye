@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v39/github"
@@ -19,40 +18,44 @@ import (
 )
 
 type GithubService struct {
-	log      common.Logger
-	ghs      search.GithubSearch
-	repoRepo repository.RepoRepository
+	log          common.Logger
+	ghs          search.GithubSearch
+	repoLinkRepo repository.RepoLinkRepository
 }
 
-func NewGithubService(ghc search.GithubSearch, r repository.RepoRepository, log common.Logger) *GithubService {
+func NewGithubService(ghc search.GithubSearch, r repository.RepoLinkRepository, log common.Logger) *GithubService {
 	return &GithubService{
-		log:      log,
-		ghs:      ghc,
-		repoRepo: r,
+		log:          log,
+		ghs:          ghc,
+		repoLinkRepo: r,
 	}
 }
 
 func (gs *GithubService) GithubCreateIssue(r *http.Request) (string, error) {
-	repoIdFromReq := r.URL.Query().Get("repoId")
-	if repoIdFromReq == "" {
-		return "", errors.NewBadRequestError("missing required field: repoId")
-	}
-
-	repoId, err := strconv.Atoi(repoIdFromReq)
+	repoId, err := gs.getRepoIdFromBody(r)
 	if err != nil {
-		return "", errors.NewBadRequestError(fmt.Sprintf("invalid value for field repoId: expected int got '%v'", repoId))
+		return "", err
 	}
 
 	gs.log.Infof("Creating issue for repo: %s", repoId)
 
-	repoDetails, err := gs.repoRepo.GetRepoByID(repoId)
+	repoDetails, err := gs.repoLinkRepo.GetRepoLinksById(repoId)
 	if err != nil {
 		return "", errors.NewInternalError(fmt.Sprintf("error getting repo from ID: %v", err))
 	}
 
-	err = gs.ghs.CreateIssueFromRepo(r.Context(), repoDetails)
+	issue, err := gs.ghs.CreateIssueFromRepo(r.Context(), repoDetails)
+	if err != nil {
+		return "", errors.NewInternalError(fmt.Sprintf("error creating issue: %v", err))
+	}
 
-	return "", nil
+	gs.log.Infof("Issue created successfully: %v", issue.GetURL())
+
+	if issue != nil {
+		return issue.GetHTMLURL(), nil
+	} else {
+		return "", errors.NewInternalError("error creating issue. Issue struct is nil")
+	}
 }
 
 func (gs *GithubService) GithubSearchRepos(r *http.Request) ([]models.RepositoryModel, error) {
@@ -220,4 +223,39 @@ func (gs *GithubService) validateBodyFromRequest(r *http.Request) (*models.Searc
 	}
 
 	return &searchParams, nil
+}
+
+func (gs *GithubService) getRepoIdFromBody(r *http.Request) (int, error) {
+
+	// The body is just {"repoId": 1} // or some other number. validate this and get the number
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return 0, errors.NewInternalError(fmt.Sprintf("error reading request body: %v", err.Error()))
+	}
+
+	gs.log.Debugf("Raw JSON from request: %s", string(body))
+
+	var repoId struct {
+		RepoId int `json:"repoId"`
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(body))
+	// We dont care about additional fields. We wont read them. We just want repo id from body
+
+	if err := dec.Decode(&repoId); err != nil {
+		if _, ok := err.(*json.UnmarshalTypeError); ok {
+			return 0, errors.NewBadRequestError(fmt.Sprintf("invalid type for field: %v", err.Error()))
+		}
+
+		return 0, errors.NewBadRequestError(fmt.Sprintf("error decoding request body: %v", err.Error()))
+	}
+
+	gs.log.Debugf("Decoded struct: %+v", repoId)
+
+	if repoId.RepoId == 0 {
+		return 0, errors.NewBadRequestError("repoId is required")
+	}
+
+	return repoId.RepoId, nil
 }

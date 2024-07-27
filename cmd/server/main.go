@@ -69,7 +69,7 @@ func main() {
 
 	// Setup Github route
 	ghs := search.NewGithubSearch(config, logger, searchRepo, repoRepo)
-	githubService := service.NewGithubService(*ghs, logger)
+	githubService := service.NewGithubService(*ghs, repoLinkRepo, logger)
 	githubHandler := handlers.NewGithubHandler(logger, *githubService)
 	routes.NewGithubRoutes(router, logger, *githubHandler, loggerMw)
 
@@ -79,7 +79,7 @@ func main() {
 	routes.NewRepoRoutes(router, logger, *repoHandler, loggerMw)
 
 	// Setup RepoLink route
-	repoLinkService := service.NewRepoLinkService(*repoLinkRepo, logger)
+	repoLinkService := service.NewRepoLinkService(repoLinkRepo, logger)
 	repoLinkHandler := handlers.NewRepoLinkHandler(logger, *repoLinkService)
 	routes.NewRepoLinkRoutes(router, logger, *repoLinkHandler, loggerMw)
 

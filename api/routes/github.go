@@ -41,7 +41,7 @@ func NewGithubRoutes(router api.AppRouter, l common.Logger, h handlers.GithubHan
 	)
 
 	createIssueHandler := http.HandlerFunc(routes.h.CreateIssue)
-	router.Get(
+	router.Post(
 		BASE_PATH+"/create-issue",
 		middleware.Chain(createIssueHandler, mws...),
 	)

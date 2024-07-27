@@ -54,6 +54,18 @@ export const searchGithubUsersRepo = async (username) => {
     }
 };
 
+export const createIssue = async (repoId) => {
+    try {
+        const response = await axios.post(
+            `${API_BASE_URL}/create-issue`,
+            JSON.stringify({ repoId })
+        );
+        return handleResponse(response);
+    } catch (error) {
+        return handleError(error);
+    }
+};
+
 export const saveRepos = async (reposFromGithub) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/save`, JSON.stringify(reposFromGithub));

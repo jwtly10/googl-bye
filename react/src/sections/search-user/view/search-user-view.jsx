@@ -33,6 +33,7 @@ import {
     searchGithubUsersRepo,
     saveRepos,
     searchRepoLinksForUser,
+    createIssue,
 } from 'src/api/client';
 import UserGrid from 'src/components/search-user/searchUserGrid';
 
@@ -46,7 +47,7 @@ export default function SearchUserPage() {
     const [rowsPerPage, setRowsPerPage] = useState(25);
 
     const [errorToast, setErrorToast] = useState({ open: false, message: '' });
-    const [successToast, setSuccessToast] = useState({ open: false, message: '' });
+    const [successToast, setSuccessToast] = useState({ open: false, message: '', url: '' });
 
     const [issues, setIssues] = useState([]);
     const [users, setUsers] = useState([]);
@@ -279,6 +280,21 @@ export default function SearchUserPage() {
         });
     };
 
+    const handleCreateIssue = async (repoId) => {
+        console.log('Creating issue for repo:', repoId);
+        try {
+            const res = await createIssue(repoId);
+            setSuccessToast({
+                open: true,
+                message: `Issue created:`,
+                url: res.url,
+            });
+        } catch (e) {
+            console.error('Error creating issue', e);
+            setErrorToast({ open: true, message: e.response.data.message });
+        }
+    };
+
     const notFound = !issuesFiltered.length && !!filterName;
 
     return (
@@ -369,6 +385,9 @@ export default function SearchUserPage() {
                                                         issues={row.links}
                                                         errorMsg={row.errorMsg}
                                                         selected={0}
+                                                        handleCreateIssue={() =>
+                                                            handleCreateIssue(row.id)
+                                                        }
                                                     />
                                                 ))}
                                             <TableEmptyRows
@@ -415,6 +434,7 @@ export default function SearchUserPage() {
                 open={successToast.open}
                 message={successToast.message}
                 onClose={handleCloseSuccessToast}
+                url={successToast.url}
             />
         </Container>
     );

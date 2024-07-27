@@ -33,16 +33,16 @@ func NewGithubSearch(config *common.Config, log common.Logger, searchRepo reposi
 	}
 }
 
-func (ghs *GithubSearch) CreateIssueFromRepo(ctx context.Context, repo *models.RepoWithLinks) error {
+func (ghs *GithubSearch) CreateIssueFromRepo(ctx context.Context, repo *models.RepoWithLinks) (*github.Issue, error) {
 	issue := ghs.createIssueTemplate(repo)
 
-	_, _, err := ghs.client.CreateIssue(ctx, repo.Author, repo.Name, issue)
+	res, _, err := ghs.client.CreateIssue(ctx, repo.Author, repo.Name, issue)
 	if err != nil {
 		ghs.log.Errorf("Error creating issue: %v", err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return res, nil
 }
 
 func (ghs *GithubSearch) FindUsers(ctx context.Context, userName string) ([]*github.User, error) {
@@ -116,17 +116,17 @@ func (gs *GithubSearch) createIssueTemplate(repo *models.RepoWithLinks) *github.
 Google is sunsetting the goo.gl URL shortener service. This repository contains goo.gl links that need to be replaced to ensure continued functionality.
 
 ### Why this is important
-[https://developers.googleblog.com/en/google-url-shortener-links-will-no-longer-be-available/]
+[Google URL Shortener links will no longer be available](https://developers.googleblog.com/en/google-url-shortener-links-will-no-longer-be-available/)
 
 ### Links found in this repository:
 
-| File | Line | goo.gl Link | GitHub URL |
-|------|------|-------------|------------|
+| File | Line | goo.gl Link | Real Link | GitHub URL |
+|------|------|-------------|-----------|------------|
 `
 
 	for _, link := range repo.Links {
-		body += fmt.Sprintf("| `%s` | %d | %s | [View in GitHub](%s) |\n",
-			link.File, link.LineNumber, link.Url, link.GithubUrl)
+		body += fmt.Sprintf("| `%s` | %d | %s | %s | [View in File](%s) |\n",
+			link.File, link.LineNumber, link.Url, link.ExpandedURL, link.GithubUrl)
 	}
 
 	body += `
@@ -136,7 +136,11 @@ Please replace these goo.gl links with direct URLs or an alternative URL shorten
 ### Additional Information
 - Total links found: ` + fmt.Sprintf("%d", len(repo.Links)) + `
 - Repository: ` + repo.Name + `
-- Last scanned: ` + time.Now().Format(time.RFC3339)
+- Last scanned: ` + time.Now().Format(time.RFC3339) + `
+
+
+Reported by [Goo.GL Bye](https://github.com/jwtly10/googl-bye)
+`
 
 	return &github.IssueRequest{
 		Title: &title,

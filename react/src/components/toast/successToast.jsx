@@ -1,7 +1,7 @@
-import { Snackbar, Alert } from '@mui/material';
+import { Snackbar, Alert, Link } from '@mui/material';
 import { useState, useEffect } from 'react';
 
-export default function SuccessToast({ message, open, onClose }) {
+export default function SuccessToast({ message, url, open, onClose }) {
     const [isOpen, setIsOpen] = useState(open);
 
     useEffect(() => {
@@ -16,6 +16,27 @@ export default function SuccessToast({ message, open, onClose }) {
         if (onClose) {
             onClose();
         }
+    };
+
+    const renderMessage = () => {
+        if (url) {
+            console.log('rendering url');
+            return (
+                <>
+                    {message}{' '}
+                    <Link
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        color="inherit"
+                        underline="always"
+                    >
+                        {url}
+                    </Link>
+                </>
+            );
+        }
+        return message;
     };
 
     return (
@@ -37,9 +58,13 @@ export default function SuccessToast({ message, open, onClose }) {
                     '& .MuiAlert-icon': {
                         color: 'white',
                     },
+                    '& a': {
+                        color: 'white',
+                        fontWeight: 'bold',
+                    },
                 }}
             >
-                {message}
+                {renderMessage()}
             </Alert>
         </Snackbar>
     );

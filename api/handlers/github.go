@@ -69,7 +69,8 @@ func (gh *GithubHandler) CreateIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonResponse, err := json.Marshal(res)
+	responseMap := map[string]string{"url": res}
+	jsonResponse, err := json.Marshal(responseMap)
 	if err != nil {
 		gh.log.Error("marshaling response failed with error: ", err)
 		utils.HandleCustomErrors(w, err)
@@ -79,7 +80,6 @@ func (gh *GithubHandler) CreateIssue(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
-
 }
 
 func (gh *GithubHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
