@@ -33,10 +33,10 @@ function Footer() {
                         . All rights reserved.
                     </Typography>
                     <Box>
-                        <Link href="#" color="inherit" sx={{ mx: 1 }}>
+                        <Link href="/privacy-policy" color="inherit" sx={{ mx: 1 }}>
                             Privacy Policy
                         </Link>
-                        <Link href="#" color="inherit" sx={{ mx: 1 }}>
+                        <Link href="/terms-and-conditions" color="inherit" sx={{ mx: 1 }}>
                             Terms of Service
                         </Link>
                     </Box>
@@ -48,6 +48,14 @@ function Footer() {
                             sx={{ mx: 1 }}
                         >
                             <Iconify icon="mdi:github" width={24} height={24} />
+                        </Link>
+                        <Link
+                            href="https://x.com/jwtly10"
+                            color="inherit"
+                            target="_blank"
+                            sx={{ mx: 1 }}
+                        >
+                            <Iconify icon="mdi:twitter" width={24} height={24} />
                         </Link>
                     </Box>
                 </Box>

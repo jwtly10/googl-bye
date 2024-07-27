@@ -3,6 +3,8 @@ import { Outlet, Navigate, useRoutes } from 'react-router-dom';
 
 import DashboardLayout from 'src/layouts/dashboard';
 import IssuesPage from 'src/pages/issues';
+import PrivacyPage from 'src/pages/privacy-policy';
+import TermsPage from 'src/pages/terms';
 
 export const IndexPage = lazy(() => import('src/pages/app'));
 export const BlogPage = lazy(() => import('src/pages/blog'));
@@ -36,6 +38,14 @@ export default function Router() {
         {
             path: 'login',
             element: <LoginPage />,
+        },
+        {
+            path: 'privacy-policy',
+            element: <PrivacyPage />,
+        },
+        {
+            path: 'terms-and-conditions',
+            element: <TermsPage />,
         },
         {
             path: '404',
