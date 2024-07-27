@@ -14,7 +14,7 @@ const navConfig = [
     // },
     {
         title: 'Search User Repos',
-        path: '/search-user',
+        path: '/',
         icon: icon('ic_user'),
     },
     {

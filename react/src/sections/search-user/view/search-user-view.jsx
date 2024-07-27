@@ -67,7 +67,7 @@ export default function SearchUserPage() {
         } catch (e) {
             // Catch any unexpected errors (as we cant control whats in local storage)
             console.error('Error loading user results', e);
-            setErrorToast({ open: true, message: e });
+            setErrorToast({ open: true, message: e.toString() });
         }
     }, []);
 
@@ -126,7 +126,7 @@ export default function SearchUserPage() {
             }
         } catch (e) {
             console.error('Error searching for users', e);
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
             setIsSearchingForUser(false);
             setShowUsersGrid(false);
             return;
@@ -151,7 +151,7 @@ export default function SearchUserPage() {
             repositories = res;
         } catch (e) {
             console.error('Error searching for repos', e);
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
 
             setShowUsersGrid(true);
             setIsSavingRepos(false);
@@ -165,7 +165,7 @@ export default function SearchUserPage() {
             console.log(repositories.length, 'repos saved to db');
         } catch (e) {
             console.log('Error saving repos to db', e);
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
 
             setShowUsersGrid(true);
             setIsSavingRepos(false);
@@ -185,7 +185,7 @@ export default function SearchUserPage() {
             console.log('Search completed!');
         } catch (e) {
             console.error('Error searching for repo links', e);
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
 
             setShowUsersGrid(true);
             setIsSavingRepos(false);
@@ -231,7 +231,7 @@ export default function SearchUserPage() {
                 console.log('Search completed!');
             } catch (e) {
                 console.error('Error searching for repo links', e);
-                setErrorToast({ open: true, message: e.response.data.message });
+                setErrorToast({ open: true, message: e.toString() });
 
                 setShowUsersGrid(true);
                 setIsSavingRepos(false);
@@ -265,7 +265,7 @@ export default function SearchUserPage() {
             console.log('Search completed!');
         } catch (e) {
             console.error('Error searching for repo links', e);
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
 
             setShowUsersGrid(true);
             setIsSavingRepos(false);
@@ -291,7 +291,7 @@ export default function SearchUserPage() {
             });
         } catch (e) {
             console.error('Error creating issue', e);
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
         }
     };
 

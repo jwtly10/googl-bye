@@ -70,7 +70,7 @@ export default function IssuesPage() {
             }
             console.log('Search completed!');
         } catch (e) {
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
         }
         setSelected([]);
         setIsLoading(false);
@@ -128,9 +128,9 @@ export default function IssuesPage() {
                     </Button>
                 </Stack>
                 <Typography variant="p">
-                    Here you can find repositories in the system, which have goo.gl links still in their code
-                    base. You can perform actions such as raising automated issues or PRs from this page.
-                    (Coming soon)
+                    Here you can find repositories in the system, which have goo.gl links still in
+                    their code base. You can perform actions such as raising automated issues or PRs
+                    from this page. (Coming soon)
                 </Typography>
             </Stack>
 
@@ -181,7 +181,10 @@ export default function IssuesPage() {
                                 {repos.length > 0 ? (
                                     <>
                                         {dataFiltered
-                                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                            .slice(
+                                                page * rowsPerPage,
+                                                page * rowsPerPage + rowsPerPage
+                                            )
                                             .map((row) => (
                                                 <RepoTableRow
                                                     key={row.id}
@@ -209,7 +212,8 @@ export default function IssuesPage() {
                                     <TableRow>
                                         <TableCell colSpan={7} align="center">
                                             <Typography variant="subtitle1">
-                                                No repositories found. Use the search to find repositories.
+                                                No repositories found. Use the search to find
+                                                repositories.
                                             </Typography>
                                         </TableCell>
                                     </TableRow>

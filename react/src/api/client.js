@@ -9,7 +9,11 @@ const handleResponse = (response) => {
 
 const handleError = (error) => {
     console.error('API call failed:', error);
-    throw error;
+    if (error.response.data.message) {
+        throw new Error(error.response.data.message);
+    } else {
+        throw error;
+    }
 };
 
 export const searchGithubRepos = async (searchParams) => {

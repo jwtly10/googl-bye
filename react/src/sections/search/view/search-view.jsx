@@ -148,7 +148,7 @@ export default function SearchPage() {
             return 'Pages to Process must be at least 1';
         }
 
-        if (searchParams.pagesToProcess > 10) {
+        if (searchParams.pagesToProcess > 20) {
             return 'Pages to Process is limited to 20';
         }
 
@@ -164,10 +164,10 @@ export default function SearchPage() {
     };
 
     const handleSearch = async () => {
-        const error = validateForm();
+        const errorMsg = validateForm();
 
-        if (error) {
-            setErrorToast({ open: true, message: error });
+        if (errorMsg) {
+            setErrorToast({ open: true, message: errorMsg });
             return;
         }
 
@@ -188,7 +188,7 @@ export default function SearchPage() {
 
             console.log('Search completed!');
         } catch (e) {
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
         }
 
         setSelected([]);
@@ -204,7 +204,7 @@ export default function SearchPage() {
             setSuccessToast({ open: true, message: `${selected.length} repo(s) saved to DB.` });
         } catch (e) {
             console.log(e);
-            setErrorToast({ open: true, message: e.response.data.message });
+            setErrorToast({ open: true, message: e.toString() });
         }
 
         setSelected([]);

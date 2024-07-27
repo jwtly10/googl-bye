@@ -1,17 +1,17 @@
 import { Helmet } from 'react-helmet-async';
 
-import { AppView } from 'src/sections/overview/view';
+import { SearchUserView } from 'src/sections/search-user/view';
 
 // ----------------------------------------------------------------------
 
 export default function AppPage() {
-  return (
-    <>
-      <Helmet>
-        <title> Dashboard | Minimal UI </title>
-      </Helmet>
+    return (
+        <>
+            <Helmet>
+                <title> User Search | GooGL-Bye </title>
+            </Helmet>
 
-      <AppView />
-    </>
-  );
+            <SearchUserView />
+        </>
+    );
 }
