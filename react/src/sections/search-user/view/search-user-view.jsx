@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 
 import {
+    Box,
     Stack,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
     Table,
     Container,
     TableBody,
@@ -13,6 +18,7 @@ import {
     Card,
 } from '@mui/material';
 
+import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 
 import SearchUserForm from 'src/components/search-user/searchUserForm';
@@ -109,6 +115,11 @@ export default function SearchUserPage() {
 
     const handleSearch = async () => {
         if (isSearchingForUser || isSavingRepos) {
+            return;
+        }
+
+        if (!username) {
+            setErrorToast({ open: true, message: 'Please enter a username to search for' });
             return;
         }
 
@@ -299,14 +310,41 @@ export default function SearchUserPage() {
 
     return (
         <Container>
-            <Stack direction="column" alignItems="left" justifyContent="space-between" mb={5}>
+            <Stack direction="column" alignItems="center" justifyContent="space-between" mb={5}>
                 <Stack mb={1}>
-                    <Typography variant="h4">Search for new Repositories</Typography>
+                    <Typography variant="h4">Upgrade Your GitHub Links</Typography>
                 </Stack>
-                <Typography variant="p">
-                    Here you can search GitHub for new repositories to add to the GooGL-Bye queue.
+                <Typography variant="body1" align="center" mb={2}>
+                    Find and replace deprecated goo.gl links in your GitHub repositories
                 </Typography>
+                <Typography variant="body2" mb={2}>
+                    Google's URL shortener (goo.gl) is being discontinued. Our tool helps you:
+                </Typography>
+                <List>
+                    <ListItem>
+                        <ListItemIcon>
+                            <Iconify icon="mdi:magnify" width={20} height={20} />
+                        </ListItemIcon>
+                        <ListItemText primary="Scan your repositories for goo.gl links" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <Iconify icon="mdi:link-variant" width={20} height={20} />
+                        </ListItemIcon>
+                        <ListItemText primary="Expand shortened URLs to their original form" />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
+                            <Iconify icon="mdi:update" width={20} height={20} />
+                        </ListItemIcon>
+                        <ListItemText primary="Create issues to track and update outdated links" />
+                    </ListItem>
+                </List>
             </Stack>
+
+            <Typography variant="body2" align="center" mb={3}>
+                Enter your GitHub username to get started:
+            </Typography>
 
             <SearchUserForm
                 setUsername={setUsername}

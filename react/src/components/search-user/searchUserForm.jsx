@@ -51,7 +51,7 @@ export default function SearchForm({ username, setUsername, handleSearch, isSear
                 <TextField
                     fullWidth
                     margin="normal"
-                    placeholder="Username"
+                    placeholder="Github Username"
                     name="username"
                     value={username}
                     onChange={handleChange}
